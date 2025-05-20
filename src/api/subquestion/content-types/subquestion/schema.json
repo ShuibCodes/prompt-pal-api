@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "subquestions",
+  "info": {
+    "singularName": "subquestion",
+    "pluralName": "subquestions",
+    "displayName": "Subquestion"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "criterion": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::criterion.criterion",
+      "inversedBy": "subquestions"
+    },
+    "question": {
+      "type": "text",
+      "required": true
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "singleType",
+  "collectionName": "image_questions",
+  "info": {
+    "singularName": "image-question",
+    "pluralName": "image-questions",
+    "displayName": "Image Question"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "imageQuestion": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": false
+    }
+  }
+}

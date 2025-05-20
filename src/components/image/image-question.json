@@ -1,0 +1,20 @@
+{
+  "collectionName": "components_image_image_questions",
+  "info": {
+    "displayName": "Image Question",
+    "icon": "apps"
+  },
+  "options": {},
+  "attributes": {
+    "imageQuestion": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": false
+    }
+  }
+}

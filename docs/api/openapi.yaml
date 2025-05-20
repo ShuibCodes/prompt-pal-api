@@ -1,0 +1,308 @@
+openapi: 3.0.4
+info:
+  title: Prompt Analyzer API
+  version: 1.0.0
+  description: API for creating users, getting prompt engineering tasks and criteria, submitting prompt solutions, and retrieving solution analyzing results and scores.
+
+servers:
+  - url: https://danielreker.duckdns.org/api/analyzer
+    description: Demo server
+  - url: http://localhost:1337/api/analyzer
+    description: Local server (for development usage only)
+
+paths:
+  /users:
+    post:
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+            example:
+              email: "someuser@example.com"
+              name: "Some User"
+      responses:
+        '200':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUserResponse'
+              example:
+                id: "g1rylgqrwqtbid3oixa7tbsi"
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /users/{userId}/tasks:
+    get:
+      summary: Get list of tasks for a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of tasks assigned to user (task is assigned to the user if the task was published not later than the user was created)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTasksResponse'
+              example:
+                data:
+                  - id: "hkblzj0z013d03y1hirw4waq"
+                    name: "Text Generation"
+                    question: "Write a prompt to generate a persuasive paragraph encouraging people to recycle more."
+                  - id: "vblf0r5fsmmpwpa2dyu6svds"
+                    name: "Image Generation"
+                    question: "Write a prompt to generate a photorealistic image of a cat sitting on a bookshelf in a cozy home office."
+                  - id: "unamrw6mlmdblv7bgro96zqp"
+                    name: "Code Generation"
+                    question: "Write a prompt to generate Python code that counts word frequency in a text file."
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /criteria:
+    get:
+      summary: Get list of evaluation criteria and subquestions
+      responses:
+        '200':
+          description: List of criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CriteriaResponse'
+              example:
+                data:
+                  - id: "hosb9bc205c3fwctkt55fe5g"
+                    name: "Clarity"
+                    subquestions:
+                      - id: "wtt8alm8y6il48t5togk58mv"
+                        question: "How clear is the prompt?"
+                      - id: "r7i8wtniq9wbzaou7rk7ai31"
+                        question: "Are there any ambiguities?"
+                  - id: "xks7obe180526mv7b0a8qxn5"
+                    name: "Specificity"
+                    subquestions:
+                      - id: "tzhes5a80vqj9itam48nsz2h"
+                        question: "How precisely is the task formulated?"
+                  - id: "zdwcpp78t7bs64rf83c2f87d"
+                    name: "Structure"
+                    subquestions:
+                      - id: "od4la7hp4mmn4cm1kzykva78"
+                        question: "How logically is the prompt constructed?"
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /users/{userId}/submissions:
+    post:
+      summary: Submit a solution for a task. Solution should contain at least 10 non-whitespace characters, otherwise error is returned.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitSolutionRequest'
+            example:
+              taskId: "unamrw6mlmdblv7bgro96zqp"
+              solutionPrompt: "Generate a summary of key insights from given CSV dataset containing sales data. How would you score our results? Give some recommendations based on trends"
+      responses:
+        '204':
+          description: Solution submitted
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /users/{userId}/results:
+    get:
+      summary: Get evaluation results for user's submissions
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User evaluation results. If some of user's tasks is not submitted or not yet checked, user score is null (like in example), otherwise user score is an average of all task scores. Note that checking solution takes some time (normally about a few seconds).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResultsResponse'
+              example:
+                score: null
+                taskResults:
+                  - taskId: "vblf0r5fsmmpwpa2dyu6svds"
+                    score: 2.3333333333333335
+                    criterionResults:
+                      - criterionId: "hosb9bc205c3fwctkt55fe5g"
+                        score: 2
+                        subquestionResults:
+                          - subquestionId: "wtt8alm8y6il48t5togk58mv"
+                            score: 2
+                            feedback: "The prompt's clarity is low..."
+                          - subquestionId: "r7i8wtniq9wbzaou7rk7ai31"
+                            score: 2
+                            feedback: "Ambiguities exist due to missing details..."
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+components:
+  schemas:
+    CreateUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+      required: [email, name]
+
+    CreateUserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+      required: [id]
+
+    UserTasksResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+      required: [data]
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        question:
+          type: string
+      required: [id, name, question]
+
+    CriteriaResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Criterion'
+      required: [data]
+
+    Criterion:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        subquestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subquestion'
+      required: [id, name, subquestions]
+
+    Subquestion:
+      type: object
+      properties:
+        id:
+          type: string
+        question:
+          type: string
+      required: [id, question]
+
+    SubmitSolutionRequest:
+      type: object
+      properties:
+        taskId:
+          type: string
+        solutionPrompt:
+          type: string
+      required: [taskId, solutionPrompt]
+
+    UserResultsResponse:
+      type: object
+      properties:
+        score:
+          type: number
+          minimum: 1
+          maximum: 5
+          nullable: true
+        taskResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskResult'
+      required: [score, taskResults]
+
+    TaskResult:
+      type: object
+      properties:
+        taskId:
+          type: string
+        score:
+          type: number
+          minimum: 1
+          maximum: 5
+        criterionResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriterionResult'
+      required: [taskId, score, criterionResults]
+
+    CriterionResult:
+      type: object
+      properties:
+        criterionId:
+          type: string
+        score:
+          type: number
+          minimum: 1
+          maximum: 5
+        subquestionResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubquestionResult'
+      required: [criterionId, score, subquestionResults]
+
+    SubquestionResult:
+      type: object
+      properties:
+        subquestionId:
+          type: string
+        score:
+          type: number
+          minimum: 1
+          maximum: 5
+        feedback:
+          type: string
+      required: [subquestionId, score, feedback]
+
+  responses:
+    ErrorResponse:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              details:
+                type: string
+            required: [error, details]
+          example:
+            error: "An error occurred while submitting solution"
+            details: "User g1rylgqrwqtbid3oixa7tbsi already submitted task unamrw6mlmdblv7bgro96zqp"
