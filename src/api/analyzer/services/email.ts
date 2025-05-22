@@ -11,7 +11,17 @@ const transporter = nodemailer.createTransport({
 export default {
     async sendResultsEmail(email: string, name: string, results: any) {
         try {
+            // Fetch all criteria from the database
+            const criteria = await strapi.db.query('api::criterion.criterion').findMany({
+                select: ['documentId', 'name'],
+            });
             
+            // Create a map of criterion IDs to names
+            const criteriaMap = criteria.reduce((acc: Record<string, string>, criterion: any) => {
+                acc[criterion.documentId] = criterion.name;
+                return acc;
+            }, {});
+
             // Calculate overall statistics
             const totalScore = results.score;
             const taskScores = results.taskResults.map((task: any) => {
@@ -37,7 +47,7 @@ export default {
                         <div style="margin-top: 15px;">
                             ${task.criterionResults.map((criterion: any) => `
                                 <div style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 6px;">
-                                    <p style="margin: 0 0 10px 0; font-size: 1.1em;"><strong style="color: #34495e;">${criterion.criterionName}:</strong> <span style="color: ${criterion.score >= 4 ? '#2ecc71' : criterion.score >= 3 ? '#f1c40f' : '#e74c3c'}">${criterion.score}/5</span></p>
+                                    <p style="margin: 0 0 10px 0; font-size: 1.1em;"><strong style="color: #34495e;">${criteriaMap[criterion.criterionId] || 'Unknown Criterion'}:</strong> <span style="color: ${criterion.score >= 4 ? '#2ecc71' : criterion.score >= 3 ? '#f1c40f' : '#e74c3c'}">${criterion.score}/5</span></p>
                                     ${criterion.subquestionResults.map((sub: any) => `
                                         <p style="margin: 5px 0 5px 20px; color: #555; font-size: 0.95em;">• ${sub.feedback}</p>
                                     `).join('')}
