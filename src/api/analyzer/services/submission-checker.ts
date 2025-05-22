@@ -107,16 +107,16 @@ export default {
         const gptResponseSchema = await this.generateGptResponseSchema(criteria);
 
         const gptGuidelines = `
-You are given a task for user to write a prompt. You need to analyze user's entered solution prompt and score it depending on given ideal prompt and criteria. Of course, ideal prompt is just a reference, you need to base your scores mostly on criteria. Provide score (from 1 to 5) and feedback (up to 200 letters) for each criterion subquestion (JSON schema for output is provided). Don't hesitate to provide low scores when needed. If prompt is irrelevant, e.g. empty or just a set of random words/letters, rate it with score 1. If prompt is effectively just a reworded copy of the task, rate it with score 1 or 2.
+        You are given a task for user to write a prompt. You need to analyze user's entered solution prompt and score it depending on given ideal prompt and criteria. Of course, ideal prompt is just a reference, you need to base your scores mostly on criteria. Provide score (from 1 to 5) and feedback (up to 200 letters) for each criterion subquestion (JSON schema for output is provided). Don't hesitate to provide low scores when needed. If prompt is irrelevant, e.g. empty or just a set of random words/letters, rate it with score 1. If prompt is effectively just a reworded copy of the task, rate it with score 1 or 2.
 
-Task for user to write a prompt:
-[${submission.task.name}] ${submission.task.question}
+        Task for user to write a prompt:
+        [${submission.task.name}] ${submission.task.question}
 
-Ideal prompt:
-${submission.task.idealPrompt}
+        Ideal prompt:
+        ${submission.task.idealPrompt}
 
-Criteria (as JSON, don't look at "id" properties - use "documentId" instead):
-${JSON.stringify({ criteria })}
+        Criteria (as JSON, don't look at "id" properties - use "documentId" instead):
+        ${JSON.stringify({ criteria })}
         `;
 
         const userSolution = `My solution:\n${submission.solutionPrompt}`;

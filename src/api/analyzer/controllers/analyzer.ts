@@ -96,4 +96,26 @@ export default {
             ctx.status = 500;
         }
     },
+
+    async sendResultsEmail(ctx) {
+        try {
+            const { userId } = ctx.params;
+            const user = await strapi.service('api::analyzer.analyzer').getUserById(userId);
+            
+            if (!user) {
+                return ctx.notFound('User not found');
+            }
+
+            const results = await strapi.service('api::analyzer.user-results').getUserResults(userId);
+            await strapi.service('api::analyzer.email').sendResultsEmail(user.email, user.name, results);
+            
+            ctx.body = { success: true, message: 'Results sent successfully' };
+        } catch (err) {
+            ctx.body = {
+                error: 'An error occurred while sending results email',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    }
 };

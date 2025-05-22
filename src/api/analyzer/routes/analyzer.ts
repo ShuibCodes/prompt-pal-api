@@ -59,5 +59,15 @@ export default {
                 auth: false,
             },
         },
+        {
+            method: 'POST',
+            path: '/analyzer/users/:userId/send-results',
+            handler: 'analyzer.sendResultsEmail',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
     ],
 };
