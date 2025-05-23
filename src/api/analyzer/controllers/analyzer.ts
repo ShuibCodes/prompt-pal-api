@@ -98,19 +98,23 @@ export default {
     },
 
     async sendResultsEmail(ctx) {
+        console.log('sendResultsEmail endpoint hit for userId:', ctx.params.userId);
         try {
             const { userId } = ctx.params;
             const user = await strapi.service('api::analyzer.analyzer').getUserById(userId);
             
             if (!user) {
+                console.log('User not found:', userId);
                 return ctx.notFound('User not found');
             }
 
+            console.log('Sending email to:', user.email);
             const results = await strapi.service('api::analyzer.user-results').getUserResults(userId);
             await strapi.service('api::analyzer.email').sendResultsEmail(user.email, user.name, results);
             
             ctx.body = { success: true, message: 'Results sent successfully' };
         } catch (err) {
+            console.error('sendResultsEmail error:', err);
             ctx.body = {
                 error: 'An error occurred while sending results email',
                 details: err instanceof Error ? err.message : 'Unknown error',
