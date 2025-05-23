@@ -11,11 +11,25 @@ const transporter = nodemailer.createTransport({
 export default {
     async sendResultsEmail(email: string, name: string, results: any) {
         try {
+            // Validate email configuration
+            if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+                throw new Error('Email configuration missing: EMAIL_USER or EMAIL_PASSWORD not set');
+            }
+
+            // Validate input parameters
+            if (!email || !name || !results) {
+                throw new Error(`Invalid input parameters: email=${!!email}, name=${!!name}, results=${!!results}`);
+            }
+
             // Fetch all criteria from the database
             const criteria = await strapi.db.query('api::criterion.criterion').findMany({
                 select: ['documentId', 'name'],
             });
             
+            if (!criteria || criteria.length === 0) {
+                throw new Error('No criteria found in database');
+            }
+
             // Create a map of criterion IDs to names
             const criteriaMap = criteria.reduce((acc: Record<string, string>, criterion: any) => {
                 acc[criterion.documentId] = criterion.name;
@@ -145,11 +159,40 @@ export default {
                 `,
             };
 
-            await transporter.sendMail(mailOptions);
-            return true;
+            // Verify transporter configuration
+            try {
+                await transporter.verify();
+            } catch (verifyError) {
+                throw new Error(`Email transporter verification failed: ${verifyError.message}`);
+            }
+
+            // Send the email
+            const info = await transporter.sendMail(mailOptions);
+            return {
+                success: true,
+                messageId: info.messageId,
+                debug: {
+                    emailConfig: {
+                        service: process.env.EMAIL_SERVICE || 'gmail',
+                        userConfigured: !!process.env.EMAIL_USER,
+                        passwordConfigured: !!process.env.EMAIL_PASSWORD
+                    }
+                }
+            };
         } catch (error) {
             console.error('Error sending email:', error);
-            throw error;
+            throw {
+                message: error.message || 'Unknown error occurred while sending email',
+                stack: error.stack,
+                code: error.code,
+                debug: {
+                    emailConfig: {
+                        service: process.env.EMAIL_SERVICE || 'gmail',
+                        userConfigured: !!process.env.EMAIL_USER,
+                        passwordConfigured: !!process.env.EMAIL_PASSWORD
+                    }
+                }
+            };
         }
     },
 }; 

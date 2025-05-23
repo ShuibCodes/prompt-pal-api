@@ -110,14 +110,41 @@ export default {
 
             console.log('Sending email to:', user.email);
             const results = await strapi.service('api::analyzer.user-results').getUserResults(userId);
+            
+            // Check if email configuration is present
+            if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+                throw new Error('Email configuration missing: EMAIL_USER or EMAIL_PASSWORD not set');
+            }
+
             await strapi.service('api::analyzer.email').sendResultsEmail(user.email, user.name, results);
             
-            ctx.body = { success: true, message: 'Results sent successfully' };
+            ctx.body = { 
+                success: true, 
+                message: 'Results sent successfully',
+                debug: {
+                    userId,
+                    userEmail: user.email,
+                    emailConfig: {
+                        service: process.env.EMAIL_SERVICE || 'gmail',
+                        userConfigured: !!process.env.EMAIL_USER,
+                        passwordConfigured: !!process.env.EMAIL_PASSWORD
+                    }
+                }
+            };
         } catch (err) {
             console.error('sendResultsEmail error:', err);
             ctx.body = {
                 error: 'An error occurred while sending results email',
                 details: err instanceof Error ? err.message : 'Unknown error',
+                debug: {
+                    userId: ctx.params.userId,
+                    emailConfig: {
+                        service: process.env.EMAIL_SERVICE || 'gmail',
+                        userConfigured: !!process.env.EMAIL_USER,
+                        passwordConfigured: !!process.env.EMAIL_PASSWORD
+                    },
+                    stack: err instanceof Error ? err.stack : undefined
+                }
             };
             ctx.status = 500;
         }
