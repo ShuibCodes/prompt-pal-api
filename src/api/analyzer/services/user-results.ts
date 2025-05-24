@@ -137,9 +137,9 @@ export default {
             }
         });
 
-        if (submittedSolutionsCount > 0) {
-            throw new Error(`User ${userId} already submitted task ${taskId}`);
-        }
+        // if (submittedSolutionsCount > 0) {
+        //     throw new Error(`User ${userId} already submitted task ${taskId}`);
+        // }
 
         const SOLUTION_MIN_NON_WHITESPACE_CHARACTERS = 10;
 
