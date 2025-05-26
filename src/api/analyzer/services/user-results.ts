@@ -31,9 +31,11 @@ export default {
         return criterionResult;
     },
 
-    async calculateTaskResult(taskId: string, taskGptResult: any) {
+    async calculateTaskResult(taskId: string, submissionId: string, submittedAt: string, taskGptResult: any) {
         const taskResult = {
             taskId,
+            submissionId,
+            submittedAt,
             score: 0,
             criterionResults: []
         };
@@ -82,11 +84,11 @@ export default {
             },
             populate: {
                 task: {
-                    fields: [ 'name', 'question', 'idealPrompt' ]
+                    fields: ['id', 'name', 'question', 'idealPrompt' ]
                 }
             },
             sort: {
-                createdAt: 'asc',
+                createdAt: 'desc',
             }
         });
 
@@ -100,9 +102,14 @@ export default {
 
             if (taskGptResult == null) continue;
 
-            const taskResult = await this.calculateTaskResult(taskId, taskGptResult);
+            const taskResult = await this.calculateTaskResult(
+                taskId,
+                submission.documentId,
+                submission.createdAt.toString(),
+                taskGptResult
+            );
 
-            if (!tasksResults.has(taskId) || tasksResults.get(taskId).score <= taskResult.score) {
+            if (!tasksResults.has(taskId)) {
                 tasksResults.set(taskId, taskResult);
             }
         }
@@ -126,16 +133,16 @@ export default {
     },
 
     async submitUserSolution(userId: string, taskId: string, solutionPrompt: string) {
-        const submittedSolutionsCount = await strapi.documents('api::submission.submission').count({
-            filters: {
-                task: {
-                    documentId: taskId,
-                },
-                appUser: {
-                    documentId: userId
-                }
-            }
-        });
+        // const submittedSolutionsCount = await strapi.documents('api::submission.submission').count({
+        //     filters: {
+        //         task: {
+        //             documentId: taskId,
+        //         },
+        //         appUser: {
+        //             documentId: userId
+        //         }
+        //     }
+        // });
 
         // if (submittedSolutionsCount > 0) {
         //     throw new Error(`User ${userId} already submitted task ${taskId}`);
