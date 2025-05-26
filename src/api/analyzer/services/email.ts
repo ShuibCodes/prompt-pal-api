@@ -100,7 +100,7 @@ export default {
                             
                             <div class="score-card">
                                 <h2 style="margin: 0 0 10px 0; font-size: 2em;">Overall Score</h2>
-                                <p style="font-size: 3em; margin: 0; font-weight: bold;">${totalScore}</p>
+                                <p style="font-size: 3em; margin: 0; font-weight: bold;">${totalScore.toFixed(2)}</p>
                             </div>
 
                             <div class="chart-container">
