@@ -30,6 +30,6 @@ export default {
             }
         });
 
-        return newUser.documentId;
+        return newUser;
     },
 };
