@@ -21,6 +21,16 @@ export default {
             },
         },
         {
+            method: 'GET',
+            path: '/analyzer/users/:userId/image-tasks',
+            handler: 'analyzer.getUserImageTasks',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
             method: 'POST',
             path: '/analyzer/users/:userId/submissions',
             handler: 'analyzer.submitUserSolution',
@@ -63,6 +73,16 @@ export default {
             method: 'POST',
             path: '/analyzer/users/:userId/send-results',
             handler: 'analyzer.sendResultsEmail',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'POST',
+            path: '/analyzer/generate-image',
+            handler: 'analyzer.generateImage',
             config: {
                 policies: [],
                 middlewares: [],

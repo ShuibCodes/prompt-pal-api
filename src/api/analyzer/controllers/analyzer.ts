@@ -33,6 +33,27 @@ export default {
         }
     },
 
+    async getUserImageTasks(ctx, next) {
+        try {
+            const imageTasks = await strapi.service('api::analyzer.analyzer').getUserImageTasks(ctx.params.userId);
+            ctx.body = {
+                data: imageTasks.map(task => ({
+                    id: task.documentId,
+                    name: task.name,
+                    question: task.question,
+                    idealPrompt: task.idealPrompt,
+                    Image: task.Image,
+                }))
+            };
+        } catch (err) {
+            ctx.body = {
+                error: 'An error occurred while fetching user image tasks',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
+
     async submitUserSolution(ctx, next) {
         try {
             await strapi.service('api::analyzer.user-results').submitUserSolution(
@@ -145,6 +166,56 @@ export default {
                     },
                     stack: err instanceof Error ? err.stack : undefined
                 }
+            };
+            ctx.status = 500;
+        }
+    },
+
+    async generateImage(ctx, next) {
+        try {
+            const { prompt } = ctx.request.body;
+            
+            if (!prompt || typeof prompt !== 'string') {
+                ctx.body = {
+                    error: 'Prompt is required and must be a string',
+                };
+                ctx.status = 400;
+                return;
+            }
+
+            // Use OpenAI's cheapest settings
+            const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${strapi.config.get('env.OPENAI_API_KEY', process.env.OPENAI_API_KEY)}`,
+                },
+                body: JSON.stringify({
+                    model: 'dall-e-2', // Cheapest model
+                    prompt: prompt,
+                    n: 1, // Generate only 1 image
+                    size: '256x256', // Smallest/cheapest size
+                    response_format: 'url'
+                })
+            });
+
+            if (!imageResponse.ok) {
+                const errorData = await imageResponse.json() as { error?: { message?: string } };
+                throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+            }
+
+            const imageData = await imageResponse.json() as { data: Array<{ url: string }> };
+            
+            ctx.body = {
+                success: true,
+                imageUrl: imageData.data[0].url,
+                prompt: prompt
+            };
+        } catch (err) {
+            console.error('Image generation error:', err);
+            ctx.body = {
+                error: 'An error occurred while generating the image',
+                details: err instanceof Error ? err.message : 'Unknown error',
             };
             ctx.status = 500;
         }

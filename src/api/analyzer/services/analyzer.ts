@@ -22,6 +22,24 @@ export default {
         });
     },
 
+    async getUserImageTasks(userId: string) {
+        const user = await this.getUserById(userId);
+
+        return await strapi.documents('api::task.task').findMany({
+            filters: {
+                Image: {
+                    $notNull: true
+                }
+            },
+            populate: {
+                Image: {
+                    populate: '*',
+                },
+            },
+            status: 'published'
+        });
+    },
+
     async createNewUser(email: string, name: string) {
         const newUser  = await strapi.documents('api::app-user.app-user').create({
             data: {
