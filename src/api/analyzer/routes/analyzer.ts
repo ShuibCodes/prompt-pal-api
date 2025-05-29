@@ -31,6 +31,16 @@ export default {
             },
         },
         {
+            method: 'GET',
+            path: '/analyzer/tasks/:taskId',
+            handler: 'analyzer.getTaskById',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
             method: 'POST',
             path: '/analyzer/users/:userId/submissions',
             handler: 'analyzer.submitUserSolution',

@@ -50,4 +50,16 @@ export default {
 
         return newUser;
     },
+
+    async getTaskById(taskId: string) {
+        return await strapi.documents('api::task.task').findOne({
+            documentId: taskId,
+            populate: {
+                Image: {
+                    populate: '*',
+                },
+            },
+            status: 'published'
+        });
+    },
 };

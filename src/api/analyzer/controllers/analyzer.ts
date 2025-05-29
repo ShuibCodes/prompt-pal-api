@@ -54,6 +54,35 @@ export default {
         }
     },
 
+    async getTaskById(ctx, next) {
+        try {
+            const task = await strapi.service('api::analyzer.analyzer').getTaskById(ctx.params.taskId);
+            if (!task) {
+                ctx.body = {
+                    error: 'Task not found',
+                };
+                ctx.status = 404;
+                return;
+            }
+            
+            ctx.body = {
+                data: {
+                    id: task.documentId,
+                    name: task.name,
+                    question: task.question,
+                    idealPrompt: task.idealPrompt,
+                    Image: task.Image,
+                }
+            };
+        } catch (err) {
+            ctx.body = {
+                error: 'An error occurred while fetching the task',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
+
     async submitUserSolution(ctx, next) {
         try {
             await strapi.service('api::analyzer.user-results').submitUserSolution(
