@@ -1,0 +1,8 @@
+{
+  "name": "strapi-provider-upload-supabase",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0"
+  }
+} 
