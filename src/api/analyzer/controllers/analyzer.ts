@@ -254,13 +254,7 @@ export default {
         try {
             const { taskId, userImageUrl, expectedImageUrl } = ctx.request.body;
             
-            console.log('Image evaluation request received:');
-            console.log('- taskId:', taskId);
-            console.log('- userImageUrl:', userImageUrl);
-            console.log('- expectedImageUrl:', expectedImageUrl);
-            
             if (!taskId || !userImageUrl || !expectedImageUrl) {
-                console.log('Missing required parameters');
                 ctx.body = {
                     error: 'taskId, userImageUrl, and expectedImageUrl are required',
                 };
@@ -268,14 +262,11 @@ export default {
                 return;
             }
 
-            console.log('Calling submission-checker service...');
             const result = await strapi.service('api::analyzer.submission-checker').checkImageComparison(
                 taskId,
                 userImageUrl, 
                 expectedImageUrl
             );
-            
-            console.log('Service returned result:', result ? 'success' : 'null');
             
             ctx.body = {
                 success: true,

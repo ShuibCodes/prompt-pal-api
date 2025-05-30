@@ -148,46 +148,58 @@ export default {
 
     async checkImageComparison(taskId: string, userImageUrl: string, expectedImageUrl: string) {
         try {
-            console.log('Starting image comparison for task:', taskId);
-            console.log('User image URL:', userImageUrl);
-            console.log('Expected image URL:', expectedImageUrl);
-
             const task = await strapi.service('api::analyzer.analyzer').getTaskById(taskId);
             
             if (!task) {
                 throw new Error('Task not found');
             }
 
-            console.log('Task found:', task.name);
-
             const criteria = await this.getCriteria();
-            console.log('Criteria loaded:', criteria.length, 'criteria');
-
             const gptResponseSchema = await this.generateGptResponseSchema(criteria);
 
+            // Add similarity score to the schema
+            const enhancedSchema = {
+                ...gptResponseSchema,
+                properties: {
+                    ...gptResponseSchema.properties,
+                    overallSimilarity: {
+                        type: "number",
+                        minimum: 0,
+                        maximum: 100,
+                        description: "Overall visual similarity percentage between the two images (0-100)"
+                    }
+                },
+                required: [...gptResponseSchema.required, "overallSimilarity"]
+            };
+
             const gptGuidelines = `
-            You are an expert image evaluator. You need to analyze and compare two images: the user's generated image and the expected target image. Score the user's image based on how well it matches the expected result using the given criteria.
+            You are an expert image evaluator. You need to analyze and compare two images: the user's generated image and the expected target image. 
 
             Task that the user was trying to accomplish:
             [${task.name}] ${task.question}
 
-            Your job is to compare:
-            1. The user's generated image (first image)
-            2. The expected target image (second image)
+            Your job is to:
+            1. Score the user's image based on the provided criteria (1-5 scale)
+            2. Provide an overall visual similarity percentage (0-100) comparing how similar the images are
 
-            Evaluate how well the user's generated image matches the expected result based on these criteria. Consider aspects like:
+            Evaluate the user's generated image (first image) against the expected target image (second image) based on:
             - Visual similarity and composition
             - Color scheme and style matching
             - Subject matter accuracy
             - Overall quality and adherence to the task requirements
 
-            Provide score (from 1 to 5) and feedback (up to 200 characters) for each criterion subquestion. Be objective and thorough in your evaluation.
+            For the overallSimilarity score:
+            - 90-100%: Nearly identical images
+            - 70-89%: Very similar with minor differences
+            - 50-69%: Moderately similar with noticeable differences
+            - 30-49%: Some similarities but significant differences
+            - 0-29%: Very different images
+
+            Provide score (from 1 to 5) and feedback (up to 200 characters) for each criterion subquestion, plus the overall similarity percentage.
 
             Criteria (as JSON, don't look at "id" properties - use "documentId" instead):
             ${JSON.stringify({ criteria })}
             `;
-
-            console.log('Making OpenAI API call...');
 
             const response = await openai.chat.completions.create({
                 model: "gpt-4o-mini", // Cheapest vision model
@@ -201,7 +213,7 @@ export default {
                         content: [
                             {
                                 type: "text",
-                                text: "Please evaluate how well the first image (user's result) matches the second image (expected result) based on the criteria provided."
+                                text: "Please evaluate how well the first image (user's result) matches the second image (expected result) based on the criteria provided, and provide an overall similarity percentage."
                             },
                             {
                                 type: "image_url",
@@ -224,29 +236,19 @@ export default {
                     type: "json_schema",
                     json_schema: {
                         name: "image_evaluation_results",
-                        schema: gptResponseSchema,
+                        schema: enhancedSchema,
                     }
                 },
                 max_tokens: 2000
             });
-
-            console.log('OpenAI response received');
-            console.log('Response content:', response.choices[0].message.content);
 
             if (!response.choices[0].message.content) {
                 throw new Error('No content received from OpenAI API');
             }
 
             const result = JSON.parse(response.choices[0].message.content);
-            console.log('Parsed result:', JSON.stringify(result, null, 2));
-            
             return result;
         } catch (error) {
-            console.error('Error in checkImageComparison:', error);
-            if (error instanceof Error) {
-                console.error('Error message:', error.message);
-                console.error('Error stack:', error.stack);
-            }
             throw error;
         }
     },
