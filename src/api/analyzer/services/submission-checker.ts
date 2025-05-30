@@ -145,4 +145,81 @@ export default {
 
         await strapi.service('api::analyzer.user-results').updateUserResult(submission.appUser.documentId);
     },
+
+    async checkImageComparison(taskId: string, userImageUrl: string, expectedImageUrl: string) {
+        const task = await strapi.service('api::analyzer.analyzer').getTaskById(taskId);
+        
+        if (!task) {
+            throw new Error('Task not found');
+        }
+
+        const criteria = await this.getCriteria();
+        const gptResponseSchema = await this.generateGptResponseSchema(criteria);
+
+        const gptGuidelines = `
+        You are an expert image evaluator. You need to analyze and compare two images: the user's generated image and the expected target image. Score the user's image based on how well it matches the expected result using the given criteria.
+
+        Task that the user was trying to accomplish:
+        [${task.name}] ${task.question}
+
+        Your job is to compare:
+        1. The user's generated image (first image)
+        2. The expected target image (second image)
+
+        Evaluate how well the user's generated image matches the expected result based on these criteria. Consider aspects like:
+        - Visual similarity and composition
+        - Color scheme and style matching
+        - Subject matter accuracy
+        - Overall quality and adherence to the task requirements
+
+        Provide score (from 1 to 5) and feedback (up to 200 characters) for each criterion subquestion. Be objective and thorough in your evaluation.
+
+        Criteria (as JSON, don't look at "id" properties - use "documentId" instead):
+        ${JSON.stringify({ criteria })}
+        `;
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini", // Cheapest vision model
+            messages: [
+                {
+                    role: "system",
+                    content: gptGuidelines
+                },
+                {
+                    role: "user",
+                    content: [
+                        {
+                            type: "text",
+                            text: "Please evaluate how well the first image (user's result) matches the second image (expected result) based on the criteria provided."
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: userImageUrl,
+                                detail: "low" // Use low detail for cost efficiency
+                            }
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: expectedImageUrl,
+                                detail: "low" // Use low detail for cost efficiency
+                            }
+                        }
+                    ]
+                }
+            ],
+            response_format: {
+                type: "json_schema",
+                json_schema: {
+                    name: "image_evaluation_results",
+                    schema: gptResponseSchema,
+                }
+            },
+            max_tokens: 2000
+        });
+
+        const result = JSON.parse(response.choices[0].message.content);
+        return result;
+    },
 }

@@ -248,5 +248,37 @@ export default {
             };
             ctx.status = 500;
         }
+    },
+
+    async evaluateImageComparison(ctx, next) {
+        try {
+            const { taskId, userImageUrl, expectedImageUrl } = ctx.request.body;
+            
+            if (!taskId || !userImageUrl || !expectedImageUrl) {
+                ctx.body = {
+                    error: 'taskId, userImageUrl, and expectedImageUrl are required',
+                };
+                ctx.status = 400;
+                return;
+            }
+
+            const result = await strapi.service('api::analyzer.submission-checker').checkImageComparison(
+                taskId,
+                userImageUrl, 
+                expectedImageUrl
+            );
+            
+            ctx.body = {
+                success: true,
+                evaluation: result
+            };
+        } catch (err) {
+            console.error('Image evaluation error:', err);
+            ctx.body = {
+                error: 'An error occurred while evaluating the images',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
     }
 };

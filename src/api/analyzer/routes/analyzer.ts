@@ -99,5 +99,15 @@ export default {
                 auth: false,
             },
         },
+        {
+            method: 'POST',
+            path: '/analyzer/evaluate-images',
+            handler: 'analyzer.evaluateImageComparison',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
     ],
 };
