@@ -1,3 +1,5 @@
+import { register } from "module";
+
 export default ({ env }) => ({
   upload: {
     config: {
@@ -14,6 +16,9 @@ export default ({ env }) => ({
       jwt: {
         expiresIn: '7d',
       },
+      register:{
+        allowedFields: ["name","lastname"]
+      }
     },
   },
   email: {

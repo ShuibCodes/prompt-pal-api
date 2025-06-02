@@ -12,6 +12,16 @@
     "draftAndPublish": false
   },
   "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "minLength": 1
+    },
+    "lastname": {
+      "type": "string",
+      "required": true,
+      "minLength": 1
+    },
     "username": {
       "type": "string",
       "minLength": 3,

@@ -9,6 +9,11 @@ export default {
         try {
             // Get all published tasks regardless of user
             const tasks = await strapi.documents('api::task.task').findMany({
+                filters: {
+                    Image: {
+                        $notNull: false
+                    }
+                },
                 populate: {
                     Image: {
                         populate: '*',
