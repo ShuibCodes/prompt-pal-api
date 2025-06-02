@@ -1,7 +1,9 @@
 import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
@@ -9,6 +11,107 @@ const transporter = nodemailer.createTransport({
 });
 
 export default {
+    async sendPasswordResetEmail(email: string, resetToken: string) {
+        try {
+            // Validate email configuration
+            if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+                throw new Error('Email configuration missing: EMAIL_USER or EMAIL_PASSWORD not set');
+            }
+
+            // Validate input parameters
+            if (!email || !resetToken) {
+                throw new Error(`Invalid input parameters: email=${!!email}, resetToken=${!!resetToken}`);
+            }
+
+            const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+            
+            const mailOptions = {
+                from: `"Prompt Pal" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: 'Reset Your Password',
+                html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <style>
+                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                            .header { text-align: center; margin-bottom: 30px; }
+                            .content { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+                            .button { background-color: #ff9800; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; }
+                            .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h1 style="color: #2c3e50; margin-bottom: 10px;">Password Reset Request</h1>
+                            </div>
+                            
+                            <div class="content">
+                                <p style="color: #34495e; font-size: 16px; line-height: 1.6;">
+                                    You requested a password reset. Click the button below to reset your password:
+                                </p>
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <a href="${resetUrl}" class="button">
+                                        Reset Password
+                                    </a>
+                                </div>
+                                <p style="color: #7f8c8d; font-size: 14px;">
+                                    This link will expire in 1 hour.
+                                </p>
+                                <p style="color: #7f8c8d; font-size: 14px;">
+                                    If you didn't request this, please ignore this email.
+                                </p>
+                            </div>
+
+                            <div class="footer">
+                                <p style="color: #7f8c8d;">Thank you for using Prompt Pal!</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `
+            };
+
+            // Verify transporter configuration
+            try {
+                await transporter.verify();
+            } catch (verifyError) {
+                throw new Error(`Email transporter verification failed: ${verifyError.message}`);
+            }
+
+            // Send the email
+            const info = await transporter.sendMail(mailOptions);
+            return {
+                success: true,
+                messageId: info.messageId,
+                debug: {
+                    emailConfig: {
+                        service: process.env.EMAIL_SERVICE || 'gmail',
+                        userConfigured: !!process.env.EMAIL_USER,
+                        passwordConfigured: !!process.env.EMAIL_PASSWORD
+                    }
+                }
+            };
+        } catch (error) {
+            console.error('Error sending password reset email:', error);
+            throw {
+                message: error.message || 'Unknown error occurred while sending email',
+                stack: error.stack,
+                code: error.code,
+                debug: {
+                    emailConfig: {
+                        service: process.env.EMAIL_SERVICE || 'gmail',
+                        userConfigured: !!process.env.EMAIL_USER,
+                        passwordConfigured: !!process.env.EMAIL_PASSWORD
+                    }
+                }
+            };
+        }
+    },
+
     async sendResultsEmail(email: string, name: string, results: any) {
         try {
             // Validate email configuration

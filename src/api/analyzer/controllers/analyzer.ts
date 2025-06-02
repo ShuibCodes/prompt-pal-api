@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 export default {
     async getUserResults(ctx, next) {
         try {

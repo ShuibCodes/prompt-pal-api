@@ -42,7 +42,7 @@ export default {
         },
         {
             method: 'POST',
-            path: '/analyzer/users/:userId/submissions',
+            path: '/analyzer/users/:userId/submit',
             handler: 'analyzer.submitUserSolution',
             config: {
                 policies: [],
@@ -52,7 +52,7 @@ export default {
         },
         {
             method: 'POST',
-            path: '/analyzer/users',
+            path: '/analyzer/users/create',
             handler: 'analyzer.createNewUser',
             config: {
                 policies: [],
@@ -61,12 +61,13 @@ export default {
             },
         },
         {
-            method: 'POST',
+            method: 'GET',
             path: '/analyzer/submissions/:submissionId/check',
             handler: 'analyzer.checkSubmission',
             config: {
                 policies: [],
                 middlewares: [],
+                auth: false,
             },
         },
         {
@@ -108,6 +109,6 @@ export default {
                 middlewares: [],
                 auth: false,
             },
-        },
+        }
     ],
 };

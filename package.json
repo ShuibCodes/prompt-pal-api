@@ -17,6 +17,7 @@
   "dependencies": {
     "@strapi/plugin-cloud": "5.12.4",
     "@strapi/plugin-users-permissions": "5.12.4",
+    "@strapi/provider-email-nodemailer": "^5.14.0",
     "@strapi/strapi": "5.12.4",
     "@supabase/supabase-js": "^2.49.8",
     "@types/nodemailer": "^6.4.17",
