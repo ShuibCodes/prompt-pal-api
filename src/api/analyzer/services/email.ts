@@ -17,9 +17,12 @@ export default {
             }
 
             // Validate input parameters
-            if (!email || !name || !results) {
-                throw new Error(`Invalid input parameters: email=${!!email}, name=${!!name}, results=${!!results}`);
+            if (!email || !results) {
+                throw new Error(`Invalid input parameters: email=${!!email}, results=${!!results}`);
             }
+
+            // Use email username as name if name is not provided
+            const displayName = name || email.split('@')[0];
 
             // Fetch all criteria from the database
             const criteria = await strapi.db.query('api::criterion.criterion').findMany({
@@ -95,7 +98,7 @@ export default {
                         <div class="container">
                             <div class="header">
                                 <h1 style="color: #2c3e50; margin-bottom: 10px;">Prompt Engineering Results</h1>
-                                <p style="color: #7f8c8d;">Hello ${name},</p>
+                                <p style="color: #7f8c8d;">Hello ${displayName},</p>
                             </div>
                             
                             <div class="score-card">

@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_profiles",
+  "info": {
+    "singularName": "user-profile",
+    "pluralName": "user-profiles",
+    "displayName": "UserProfile",
+    "description": "Additional user profile information"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "bio": {
+      "type": "text"
+    },
+    "website": {
+      "type": "string"
+    },
+    "social_links": {
+      "type": "json"
+    },
+    "preferences": {
+      "type": "json"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "mappedBy": "userProfile"
+    }
+  }
+} 

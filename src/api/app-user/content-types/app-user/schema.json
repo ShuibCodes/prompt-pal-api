@@ -10,16 +10,34 @@
   "options": {
     "draftAndPublish": false
   },
+  "pluginOptions": {
+    "users-permissions": {
+      "config": {
+        "jwtSecret": "your-jwt-secret"
+      }
+    }
+  },
   "attributes": {
-    "name": {
+    "username": {
       "type": "string",
       "required": true,
-      "minLength": 1
+      "unique": true,
+      "minLength": 3
     },
     "email": {
       "type": "email",
       "required": true,
-      "unique": false
+      "unique": true
+    },
+    "password": {
+      "type": "password",
+      "private": true,
+      "minLength": 6
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "minLength": 1
     },
     "submissions": {
       "type": "relation",

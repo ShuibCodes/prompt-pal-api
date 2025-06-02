@@ -14,7 +14,7 @@
     "appUser": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "api::app-user.app-user",
+      "target": "plugin::users-permissions.user",
       "inversedBy": "submissions"
     },
     "task": {

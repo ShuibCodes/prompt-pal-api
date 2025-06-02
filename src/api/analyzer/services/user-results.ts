@@ -119,35 +119,15 @@ export default {
 
     async updateUserResult(userId: string) {
         const userResults = await this.getUserResults(userId);
-        await strapi.documents('api::app-user.app-user').update({
-            documentId: userId,
+        await strapi.query('plugin::users-permissions.user').update({
+            where: { documentId: userId },
             data: {
                 result: userResults.score?.toFixed(2)
             }
-        })
-    },
-
-    async countNonWhitespaceCharacters(str: string) {
-        const strWithoutWhitespace = str.replace(/\s/g, "");
-        return strWithoutWhitespace.length;
+        });
     },
 
     async submitUserSolution(userId: string, taskId: string, solutionPrompt: string) {
-        // const submittedSolutionsCount = await strapi.documents('api::submission.submission').count({
-        //     filters: {
-        //         task: {
-        //             documentId: taskId,
-        //         },
-        //         appUser: {
-        //             documentId: userId
-        //         }
-        //     }
-        // });
-
-        // if (submittedSolutionsCount > 0) {
-        //     throw new Error(`User ${userId} already submitted task ${taskId}`);
-        // }
-
         const SOLUTION_MIN_NON_WHITESPACE_CHARACTERS = 10;
 
         const solutionNonWhitespaceCharactersCount = await this.countNonWhitespaceCharacters(solutionPrompt);
@@ -166,4 +146,8 @@ export default {
         // TODO: Refactor with some queue
         strapi.service('api::analyzer.submission-checker').checkSubmission(submission.documentId);
     },
+
+    async countNonWhitespaceCharacters(text: string): Promise<number> {
+        return text.replace(/\s/g, '').length;
+    }
 };
