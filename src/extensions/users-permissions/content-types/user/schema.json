@@ -79,7 +79,7 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::submission.submission",
-      "mappedBy": "appUser"
+      "mappedBy": "users_permissions_user"
     }
   }
-} 
+}

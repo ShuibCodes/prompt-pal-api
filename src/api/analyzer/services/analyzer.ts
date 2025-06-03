@@ -53,12 +53,18 @@ export default {
 
     async createNewUser(email: string, name: string) {
         const username = email.split('@')[0]; // Generate username from email
-        const newUser  = await strapi.documents('api::app-user.app-user').create({
+        const password = Math.random().toString(36).slice(-8); // Generate a random password
+        
+        const newUser = await strapi.query('plugin::users-permissions.user').create({
             data: {
                 email,
-                name,
                 username,
-                password: Math.random().toString(36).slice(-8), // Generate a random password
+                password,
+                provider: 'local',
+                confirmed: true,
+                blocked: false,
+                role: 1, // Authenticated role
+                name
             }
         });
 

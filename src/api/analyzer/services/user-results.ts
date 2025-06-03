@@ -78,7 +78,7 @@ export default {
     async getUserResults(userId: string) {
         const submissions = await strapi.documents('api::submission.submission').findMany({
             filters: {
-                appUser: {
+                users_permissions_user: {
                     documentId: userId
                 }
             },
@@ -137,7 +137,7 @@ export default {
 
         const submission = await strapi.documents('api::submission.submission').create({
             data: {
-                appUser: userId,
+                users_permissions_user: userId,
                 task: taskId,
                 solutionPrompt
             }

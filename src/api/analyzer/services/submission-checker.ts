@@ -97,11 +97,16 @@ export default {
                 task: {
                     fields: [ 'name', 'question', 'idealPrompt' ]
                 },
-                appUser: {
-                    fields: []
+                users_permissions_user: {
+                    fields: [ 'id', 'username', 'email' ]
                 }
             }
         });
+
+        if (!submission || !submission.users_permissions_user) {
+            throw new Error('Submission or user not found');
+        }
+
         const criteria = await this.getCriteria();
 
         const gptResponseSchema = await this.generateGptResponseSchema(criteria);
@@ -143,7 +148,7 @@ export default {
             }
         });
 
-        await strapi.service('api::analyzer.user-results').updateUserResult(submission.appUser.documentId);
+        await strapi.service('api::analyzer.user-results').updateUserResult(submission.users_permissions_user.id);
     },
 
     async checkImageComparison(taskId: string, userImageUrl: string, expectedImageUrl: string) {

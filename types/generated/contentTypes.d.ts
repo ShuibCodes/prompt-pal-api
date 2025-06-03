@@ -369,65 +369,6 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiAppUserAppUser extends Struct.CollectionTypeSchema {
-  collectionName: 'app_users';
-  info: {
-    description: '';
-    displayName: 'AppUser';
-    pluralName: 'app-users';
-    singularName: 'app-user';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  pluginOptions: {
-    'users-permissions': {
-      config: {
-        jwtSecret: 'your-jwt-secret';
-      };
-    };
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    email: Schema.Attribute.Email &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::app-user.app-user'
-    > &
-      Schema.Attribute.Private;
-    name: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMaxLength<{
-        minLength: 1;
-      }>;
-    password: Schema.Attribute.Password &
-      Schema.Attribute.Private &
-      Schema.Attribute.SetMinMaxLength<{
-        minLength: 6;
-      }>;
-    publishedAt: Schema.Attribute.DateTime;
-    result: Schema.Attribute.String;
-    submissions: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::submission.submission'
-    >;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    username: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique &
-      Schema.Attribute.SetMinMaxLength<{
-        minLength: 3;
-      }>;
-  };
-}
-
 export interface ApiCriterionCriterion extends Struct.CollectionTypeSchema {
   collectionName: 'criteria';
   info: {
@@ -503,10 +444,6 @@ export interface ApiSubmissionSubmission extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    appUser: Schema.Attribute.Relation<
-      'manyToOne',
-      'plugin::users-permissions.user'
-    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -523,6 +460,10 @@ export interface ApiSubmissionSubmission extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    users_permissions_user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
   };
 }
 
@@ -1145,7 +1086,6 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
-      'api::app-user.app-user': ApiAppUserAppUser;
       'api::criterion.criterion': ApiCriterionCriterion;
       'api::image-question.image-question': ApiImageQuestionImageQuestion;
       'api::submission.submission': ApiSubmissionSubmission;
