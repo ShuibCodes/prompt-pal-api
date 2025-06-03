@@ -76,6 +76,10 @@ export default {
     },
 
     async getUserResults(userId: string) {
+        // Get today's tasks
+        const todayTasks = await strapi.service('api::analyzer.analyzer').getDailyTasks();
+        const todayTaskIds = new Set(todayTasks.map(task => task.documentId));
+
         const submissions = await strapi.documents('api::submission.submission').findMany({
             filters: {
                 users_permissions_user: {
@@ -92,14 +96,15 @@ export default {
             }
         });
 
-        const userTasks = await strapi.service('api::analyzer.analyzer').getUserTasks(userId);
-
         const tasksResults = new Map<string, any>();
 
         for (const submission of submissions) {
             const taskId = submission.task.documentId;
-            const taskGptResult: any = submission.result?.valueOf();
+            
+            // Only process submissions for today's tasks
+            if (!todayTaskIds.has(taskId)) continue;
 
+            const taskGptResult: any = submission.result?.valueOf();
             if (taskGptResult == null) continue;
 
             const taskResult = await this.calculateTaskResult(
@@ -114,7 +119,7 @@ export default {
             }
         }
 
-        return this.calculateUserResult(userTasks, tasksResults);
+        return this.calculateUserResult(todayTasks, tasksResults);
     },
 
     async updateUserResult(userId: string) {

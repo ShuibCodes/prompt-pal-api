@@ -109,6 +109,16 @@ export default {
                 middlewares: [],
                 auth: false,
             },
+        },
+        {
+            method: 'GET',
+            path: '/analyzer/daily-tasks',
+            handler: 'analyzer.getDailyTasks',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
         }
     ],
 };

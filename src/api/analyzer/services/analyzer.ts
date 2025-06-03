@@ -82,4 +82,58 @@ export default {
             status: 'published'
         });
     },
+
+    async getDailyTasks() {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Set to start of day
+            const todayStr = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+
+            console.log('Current date for filtering:', todayStr);
+
+            // First get all tasks to debug
+            const allTasks = await strapi.documents('api::task.task').findMany({
+                populate: {
+                    Image: {
+                        populate: '*',
+                    },
+                },
+                status: 'published'
+            });
+
+            console.log('All tasks with their dates:', allTasks.map(task => ({
+                id: task.documentId,
+                name: task.name,
+                day: task.Day
+            })));
+
+            // Filter tasks for today
+            const tasks = allTasks.filter(task => {
+                const taskDate = new Date(task.Day);
+                taskDate.setHours(0, 0, 0, 0);
+                const taskDateStr = taskDate.toISOString().split('T')[0];
+                
+                console.log('Comparing dates:', {
+                    taskId: task.documentId,
+                    taskName: task.name,
+                    taskDate: taskDateStr,
+                    today: todayStr,
+                    isMatch: taskDateStr === todayStr
+                });
+
+                return taskDateStr === todayStr;
+            });
+
+            console.log('Filtered tasks for today:', tasks.map(task => ({
+                id: task.documentId,
+                name: task.name,
+                day: task.Day
+            })));
+
+            return tasks;
+        } catch (error) {
+            console.error('Error in getDailyTasks:', error);
+            throw error;
+        }
+    },
 };

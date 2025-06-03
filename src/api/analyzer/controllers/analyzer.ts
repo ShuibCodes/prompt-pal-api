@@ -23,6 +23,7 @@ export default {
                     question: task.question,
                     idealPrompt: task.idealPrompt,
                     Image: task.Image,
+                    Day: task.Day
 
                 }))
             };
@@ -282,5 +283,23 @@ export default {
             };
             ctx.status = 500;
         }
-    }
+    },
+
+    async getDailyTasks(ctx) {
+        try {
+            const tasks = await strapi.service('api::analyzer.analyzer').getDailyTasks();
+            return ctx.send({ 
+                data: tasks.map(task => ({
+                    id: task.documentId,
+                    name: task.name,
+                    question: task.question,
+                    idealPrompt: task.idealPrompt,
+                    Image: task.Image,
+                    Day: task.Day
+                }))
+            });
+        } catch (error) {
+            return ctx.badRequest('Failed to fetch daily tasks', { error: error.message });
+        }
+    },
 };

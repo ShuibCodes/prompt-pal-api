@@ -27,6 +27,9 @@
       "type": "component",
       "repeatable": true,
       "component": "image.image-question"
+    },
+    "Day": {
+      "type": "date"
     }
   }
 }

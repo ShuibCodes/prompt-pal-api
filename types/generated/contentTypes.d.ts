@@ -514,6 +514,7 @@ export interface ApiTaskTask extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    Day: Schema.Attribute.Date;
     idealPrompt: Schema.Attribute.Text & Schema.Attribute.Required;
     Image: Schema.Attribute.Component<'image.image-question', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
