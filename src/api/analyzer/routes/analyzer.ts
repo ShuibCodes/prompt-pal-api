@@ -170,5 +170,15 @@ export default {
                 auth: false,
             },
         },
+        {
+            method: 'POST',
+            path: '/analyzer/send-daily-notifications',
+            handler: 'analyzer.sendDailyNotifications',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
     ],
 };

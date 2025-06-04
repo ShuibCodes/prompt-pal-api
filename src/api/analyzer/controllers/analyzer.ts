@@ -468,4 +468,23 @@ export default {
             ctx.status = 500;
         }
     },
+
+    async sendDailyNotifications(ctx) {
+        console.log('Manual daily notifications trigger');
+        try {
+            const result = await strapi.service('api::analyzer.email').sendDailyNotificationsToAllUsers();
+            
+            ctx.body = {
+                success: true,
+                ...result
+            };
+        } catch (err) {
+            console.error('sendDailyNotifications error:', err);
+            ctx.body = {
+                error: 'An error occurred while sending daily notifications',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
 };
