@@ -355,4 +355,62 @@ export default {
             ctx.status = 500;
         }
     },
+
+    async googleSignIn(ctx) {
+        try {
+            const { email, name, googleId } = ctx.request.body;
+            
+            if (!email || !name || !googleId) {
+                ctx.body = {
+                    error: 'Missing required fields: email, name, googleId'
+                };
+                ctx.status = 400;
+                return;
+            }
+
+            // Check if user already exists by email
+            let user = await strapi.query('plugin::users-permissions.user').findOne({
+                where: { email }
+            });
+
+            if (user) {
+                // User exists, just return their info
+                ctx.body = {
+                    success: true,
+                    user: {
+                        id: user.documentId,
+                        email: user.email,
+                        name: user.name
+                    }
+                };
+            } else {
+                // Create new user with Google info
+                user = await strapi.query('plugin::users-permissions.user').create({
+                    data: {
+                        email,
+                        username: email, // Use email as username
+                        name,
+                        confirmed: true, // Auto-confirm Google users
+                        blocked: false
+                    }
+                });
+
+                ctx.body = {
+                    success: true,
+                    user: {
+                        id: user.documentId,
+                        email: user.email,
+                        name: user.name
+                    }
+                };
+            }
+        } catch (err) {
+            console.error('Google sign-in error:', err);
+            ctx.body = {
+                error: 'An error occurred during Google sign-in',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
 };

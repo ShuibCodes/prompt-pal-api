@@ -149,6 +149,16 @@ export default {
                 middlewares: [],
                 auth: false,
             },
-        }
+        },
+        {
+            method: 'POST',
+            path: '/analyzer/google-signin',
+            handler: 'analyzer.googleSignIn',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
     ],
 };
