@@ -28,6 +28,12 @@
     },
     "result": {
       "type": "json"
+    },
+    "task_score": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::task-score.task-score",
+      "mappedBy": "submission"
     }
   }
 }

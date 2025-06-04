@@ -129,6 +129,26 @@ export default {
                 middlewares: [],
                 auth: false,
             },
+        },
+        {
+            method: 'GET',
+            path: '/analyzer/users/:userId/completed-tasks',
+            handler: 'analyzer.getUserCompletedTasks',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'GET',
+            path: '/analyzer/average-scores',
+            handler: 'analyzer.getAverageScores',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
         }
     ],
 };

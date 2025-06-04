@@ -457,6 +457,10 @@ export interface ApiSubmissionSubmission extends Struct.CollectionTypeSchema {
     result: Schema.Attribute.JSON;
     solutionPrompt: Schema.Attribute.Text & Schema.Attribute.Required;
     task: Schema.Attribute.Relation<'oneToOne', 'api::task.task'>;
+    task_score: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::task-score.task-score'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -499,6 +503,74 @@ export interface ApiSubquestionSubquestion extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiTaskScoreTaskScore extends Struct.CollectionTypeSchema {
+  collectionName: 'task_scores';
+  info: {
+    description: '';
+    displayName: 'Task Score';
+    pluralName: 'task-scores';
+    singularName: 'task-score';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    attempts: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 1;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<1>;
+    completedAt: Schema.Attribute.DateTime;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    isCompleted: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::task-score.task-score'
+    > &
+      Schema.Attribute.Private;
+    percentageScore: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 100;
+          min: 0;
+        },
+        number
+      >;
+    publishedAt: Schema.Attribute.DateTime;
+    score: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 5;
+          min: 1;
+        },
+        number
+      >;
+    submission: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::submission.submission'
+    >;
+    task: Schema.Attribute.Relation<'manyToOne', 'api::task.task'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
 export interface ApiTaskTask extends Struct.CollectionTypeSchema {
   collectionName: 'tasks';
   info: {
@@ -523,6 +595,10 @@ export interface ApiTaskTask extends Struct.CollectionTypeSchema {
     name: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     question: Schema.Attribute.Text & Schema.Attribute.Required;
+    task_scores: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::task-score.task-score'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1065,6 +1141,10 @@ export interface PluginUsersPermissionsUser
       'oneToMany',
       'api::submission.submission'
     >;
+    task_scores: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::task-score.task-score'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1091,6 +1171,7 @@ declare module '@strapi/strapi' {
       'api::image-question.image-question': ApiImageQuestionImageQuestion;
       'api::submission.submission': ApiSubmissionSubmission;
       'api::subquestion.subquestion': ApiSubquestionSubquestion;
+      'api::task-score.task-score': ApiTaskScoreTaskScore;
       'api::task.task': ApiTaskTask;
       'api::user-profile.user-profile': ApiUserProfileUserProfile;
       'plugin::content-releases.release': PluginContentReleasesRelease;

@@ -30,6 +30,12 @@
     },
     "Day": {
       "type": "date"
+    },
+    "task_scores": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::task-score.task-score",
+      "mappedBy": "task"
     }
   }
 }

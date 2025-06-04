@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "task_scores",
+  "info": {
+    "singularName": "task-score",
+    "pluralName": "task-scores",
+    "displayName": "Task Score",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "task_scores"
+    },
+    "task": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::task.task",
+      "inversedBy": "task_scores"
+    },
+    "score": {
+      "type": "decimal",
+      "required": true,
+      "min": 1,
+      "max": 5
+    },
+    "percentageScore": {
+      "type": "integer",
+      "required": true,
+      "min": 0,
+      "max": 100
+    },
+    "attempts": {
+      "type": "integer",
+      "required": true,
+      "min": 1,
+      "default": 1
+    },
+    "isCompleted": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    },
+    "submission": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::submission.submission",
+      "inversedBy": "task_score"
+    },
+    "completedAt": {
+      "type": "datetime"
+    }
+  }
+}

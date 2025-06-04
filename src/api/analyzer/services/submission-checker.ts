@@ -148,6 +148,21 @@ export default {
             }
         });
 
+        // Create or update task score record
+        const taskResult = await strapi.service('api::analyzer.user-results').calculateTaskResult(
+            submission.task.documentId,
+            submission.documentId,
+            submission.createdAt.toString(),
+            JSON.parse(response.output_text)
+        );
+
+        await strapi.service('api::analyzer.user-results').createOrUpdateTaskScore(
+            submission.users_permissions_user.documentId,
+            submission.task.documentId,
+            submission.documentId,
+            taskResult
+        );
+
         await strapi.service('api::analyzer.user-results').updateUserResult(submission.users_permissions_user.id);
     },
 

@@ -317,4 +317,42 @@ export default {
             return ctx.badRequest('Failed to fetch daily tasks', { error: error.message });
         }
     },
+
+    async getUserCompletedTasks(ctx) {
+        try {
+            const { userId } = ctx.params;
+            const completedTasks = await strapi.service('api::analyzer.user-results').getUserCompletedTasks(userId);
+            
+            ctx.body = {
+                success: true,
+                data: completedTasks
+            };
+        } catch (err) {
+            console.error('getUserCompletedTasks error:', err);
+            ctx.body = {
+                error: 'An error occurred while fetching completed tasks',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
+
+    async getAverageScores(ctx) {
+        try {
+            const excludeUserId = ctx.query.excludeUserId; // Get userId from query params
+            const averageScores = await strapi.service('api::analyzer.user-results').getAverageScores(excludeUserId);
+            
+            ctx.body = {
+                success: true,
+                data: averageScores
+            };
+        } catch (err) {
+            console.error('getAverageScores error:', err);
+            ctx.body = {
+                error: 'An error occurred while fetching average scores',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
 };

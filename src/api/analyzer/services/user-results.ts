@@ -218,5 +218,210 @@ export default {
 
     async countNonWhitespaceCharacters(text: string): Promise<number> {
         return text.replace(/\s/g, '').length;
+    },
+
+    async createOrUpdateTaskScore(userId: string, taskId: string, submissionId: string, taskResult: any) {
+        const totalScore = taskResult.criterionResults.reduce(
+            (sum: number, criterion: any) => sum + criterion.score, 0
+        );
+        const maxPossibleScore = taskResult.criterionResults.length * 5;
+        const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
+
+        // Check if user already has a score for this task
+        const existingScore = await strapi.documents('api::task-score.task-score').findMany({
+            filters: {
+                user: { documentId: userId },
+                task: { documentId: taskId }
+            },
+            limit: 1
+        });
+
+        const scoreData = {
+            user: userId,
+            task: taskId,
+            submission: submissionId,
+            score: totalScore / taskResult.criterionResults.length, // Average score (1-5)
+            percentageScore: percentageScore,
+            attempts: 1, // First attempt
+            isCompleted: true,
+            completedAt: new Date().toISOString()
+        };
+
+        if (existingScore.length > 0) {
+            // Update existing score (increment attempts, update score if better)
+            const existing = existingScore[0];
+            const shouldUpdate = percentageScore > (existing.percentageScore || 0);
+            
+            await strapi.documents('api::task-score.task-score').update({
+                documentId: existing.documentId,
+                data: {
+                    attempts: (existing.attempts || 1) + 1,
+                    ...(shouldUpdate ? {
+                        score: scoreData.score,
+                        percentageScore: scoreData.percentageScore,
+                        submission: submissionId,
+                        completedAt: scoreData.completedAt
+                    } : {})
+                }
+            });
+
+            console.log(`Updated task score for user ${userId}, task ${taskId}. Attempt: ${(existing.attempts || 1) + 1}, Score: ${shouldUpdate ? percentageScore : existing.percentageScore}%`);
+        } else {
+            // Create new score record
+            await strapi.documents('api::task-score.task-score').create({
+                data: scoreData
+            });
+
+            console.log(`Created new task score for user ${userId}, task ${taskId}. Score: ${percentageScore}%`);
+        }
+    },
+
+    async getUserCompletedTasks(userId: string) {
+        const taskScores = await strapi.documents('api::task-score.task-score').findMany({
+            filters: {
+                user: { documentId: userId },
+                isCompleted: true
+            },
+            populate: {
+                task: {
+                    fields: ['id', 'name', 'Day']
+                }
+            }
+        });
+
+        return taskScores.map(score => ({
+            taskId: score.task.documentId,
+            taskName: score.task.name,
+            taskDay: score.task.Day,
+            score: score.score,
+            percentageScore: score.percentageScore,
+            attempts: score.attempts,
+            completedAt: score.completedAt
+        }));
+    },
+
+    async getAverageScores(excludeUserId?: string) {
+        // Get all task scores for all users
+        const allTaskScores = await strapi.documents('api::task-score.task-score').findMany({
+            filters: {
+                isCompleted: true,
+                ...(excludeUserId ? {
+                    user: {
+                        documentId: {
+                            $ne: excludeUserId // Exclude the specified user
+                        }
+                    }
+                } : {})
+            },
+            populate: {
+                task: {
+                    fields: ['id', 'name']
+                },
+                submission: {
+                    fields: ['result']
+                }
+            }
+        });
+
+        // Group scores by task
+        const taskScoresMap = new Map();
+        const criteriaScoresMap = new Map();
+
+        for (const taskScore of allTaskScores) {
+            const taskId = taskScore.task.documentId;
+            const taskName = taskScore.task.name;
+
+            // Track task-level average scores
+            if (!taskScoresMap.has(taskId)) {
+                taskScoresMap.set(taskId, {
+                    taskId,
+                    taskName,
+                    scores: [],
+                    totalScore: 0,
+                    count: 0
+                });
+            }
+
+            const taskData = taskScoresMap.get(taskId);
+            taskData.scores.push(taskScore.score);
+            taskData.totalScore += taskScore.score;
+            taskData.count += 1;
+
+            // Track criteria-level average scores from submission results
+            if (taskScore.submission?.result) {
+                const submissionResult = taskScore.submission.result;
+                
+                // Type check and parse the result if it's a string
+                let resultData: any;
+                if (typeof submissionResult === 'string') {
+                    try {
+                        resultData = JSON.parse(submissionResult);
+                    } catch (e) {
+                        continue; // Skip if can't parse
+                    }
+                } else {
+                    resultData = submissionResult;
+                }
+                
+                if (resultData && typeof resultData === 'object' && resultData.criteria) {
+                    for (const [criterionId, criterionData] of Object.entries(resultData.criteria)) {
+                        if (!criteriaScoresMap.has(criterionId)) {
+                            criteriaScoresMap.set(criterionId, {
+                                criterionId,
+                                scores: [],
+                                totalScore: 0,
+                                count: 0
+                            });
+                        }
+
+                        const criteriaDataEntry = criteriaScoresMap.get(criterionId);
+                        let criterionScore = 0;
+                        let subquestionCount = 0;
+
+                        // Calculate criterion score from subquestions
+                        if (criterionData && typeof criterionData === 'object' && 'subquestions' in criterionData) {
+                            const subquestions = (criterionData as any).subquestions;
+                            if (subquestions && typeof subquestions === 'object') {
+                                for (const subquestionData of Object.values(subquestions)) {
+                                    if (subquestionData && typeof subquestionData === 'object' && 'score' in subquestionData) {
+                                        const score = (subquestionData as any).score;
+                                        if (typeof score === 'number') {
+                                            criterionScore += score;
+                                            subquestionCount++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (subquestionCount > 0) {
+                            const avgCriterionScore = criterionScore / subquestionCount;
+                            criteriaDataEntry.scores.push(avgCriterionScore);
+                            criteriaDataEntry.totalScore += avgCriterionScore;
+                            criteriaDataEntry.count += 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Calculate final averages
+        const taskAverages = Array.from(taskScoresMap.values()).map(task => ({
+            taskId: task.taskId,
+            taskName: task.taskName,
+            averageScore: task.totalScore / task.count,
+            totalSubmissions: task.count
+        }));
+
+        const criteriaAverages = Array.from(criteriaScoresMap.values()).map(criterion => ({
+            criterionId: criterion.criterionId,
+            averageScore: criterion.totalScore / criterion.count,
+            totalSubmissions: criterion.count
+        }));
+
+        return {
+            taskAverages,
+            criteriaAverages
+        };
     }
 };

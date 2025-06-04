@@ -80,6 +80,12 @@
       "relation": "oneToMany",
       "target": "api::submission.submission",
       "mappedBy": "users_permissions_user"
+    },
+    "task_scores": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::task-score.task-score",
+      "mappedBy": "user"
     }
   }
 }
