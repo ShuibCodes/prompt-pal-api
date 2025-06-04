@@ -75,6 +75,70 @@ export default {
         return userResult;
     },
 
+    async getUserResultsForTask(userId: string, taskId: string) {
+        const submissions = await strapi.documents('api::submission.submission').findMany({
+            filters: {
+                users_permissions_user: {
+                    documentId: userId
+                },
+                task: {
+                    documentId: taskId
+                }
+            },
+            populate: {
+                task: {
+                    fields: ['id', 'name', 'question', 'idealPrompt' ]
+                }
+            },
+            sort: {
+                createdAt: 'desc',
+            }
+        });
+
+        const tasksResults = new Map<string, any>();
+
+        for (const submission of submissions) {
+            const submissionTaskId = submission.task.documentId;
+            
+            const taskGptResult: any = submission.result?.valueOf();
+            if (taskGptResult == null) continue;
+
+            const taskResult = await this.calculateTaskResult(
+                submissionTaskId,
+                submission.documentId,
+                submission.createdAt.toString(),
+                taskGptResult
+            );
+
+            if (!tasksResults.has(submissionTaskId)) {
+                tasksResults.set(submissionTaskId, taskResult);
+            }
+        }
+
+        // Get the specific task info
+        const task = await strapi.documents('api::task.task').findOne({
+            documentId: taskId,
+            fields: ['id', 'name', 'question', 'idealPrompt']
+        });
+
+        if (!task) {
+            throw new Error(`Task with ID ${taskId} not found`);
+        }
+
+        const userResult = {
+            score: null,
+            taskResults: []
+        };
+
+        if (tasksResults.has(taskId)) {
+            const taskResult = tasksResults.get(taskId);
+            userResult.taskResults.push(taskResult);
+            userResult.score = taskResult.score;
+        }
+
+        return userResult;
+    },
+
     async getUserResults(userId: string) {
         // Get today's tasks
         const todayTasks = await strapi.service('api::analyzer.analyzer').getDailyTasks();

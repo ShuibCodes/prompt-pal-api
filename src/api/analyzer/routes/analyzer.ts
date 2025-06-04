@@ -12,6 +12,16 @@ export default {
         },
         {
             method: 'GET',
+            path: '/analyzer/users/:userId/tasks/:taskId/results',
+            handler: 'analyzer.getUserResultsForTask',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'GET',
             path: '/analyzer/users/:userId/tasks',
             handler: 'analyzer.getUserTasks',
             config: {

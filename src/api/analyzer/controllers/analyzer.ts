@@ -13,6 +13,21 @@ export default {
         }
     },
 
+    async getUserResultsForTask(ctx, next) {
+        try {
+            ctx.body = await strapi.service('api::analyzer.user-results').getUserResultsForTask(
+                ctx.params.userId, 
+                ctx.params.taskId
+            );
+        } catch (err) {
+            ctx.body = {
+                error: 'An error occurred while fetching user results for task',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
+
     async getUserTasks(ctx, next) {
         try {
             const userTasks = await strapi.service('api::analyzer.analyzer').getUserTasks(ctx.params.userId);
