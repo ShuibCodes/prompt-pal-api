@@ -85,11 +85,15 @@ export default {
 
     async getDailyTasks() {
         try {
+            // Get current date in local timezone (not UTC)
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // Set to start of day
-            const todayStr = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`; // Format as YYYY-MM-DD in local timezone
 
-            console.log('Current date for filtering:', todayStr);
+            console.log('Current date for filtering (local timezone):', todayStr);
+            console.log('Server timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
 
             // First get all tasks to debug
             const allTasks = await strapi.documents('api::task.task').findMany({
@@ -109,9 +113,10 @@ export default {
 
             // Filter tasks for today
             const tasks = allTasks.filter(task => {
-                const taskDate = new Date(task.Day);
-                taskDate.setHours(0, 0, 0, 0);
-                const taskDateStr = taskDate.toISOString().split('T')[0];
+                if (!task.Day) return false;
+                
+                // Parse the task date (which should be stored as YYYY-MM-DD)
+                const taskDateStr = task.Day.toString().split('T')[0]; // Handle both Date objects and strings
                 
                 console.log('Comparing dates:', {
                     taskId: task.documentId,

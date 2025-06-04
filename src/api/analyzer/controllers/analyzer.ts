@@ -218,6 +218,61 @@ export default {
         }
     },
 
+    async sendTaskResultsEmail(ctx) {
+        console.log('sendTaskResultsEmail endpoint hit for userId:', ctx.params.userId, 'taskId:', ctx.params.taskId);
+        try {
+            const { userId, taskId } = ctx.params;
+            const user = await strapi.service('api::analyzer.analyzer').getUserById(userId);
+            
+            if (!user) {
+                console.log('User not found:', userId);
+                return ctx.notFound('User not found');
+            }
+
+            console.log('Sending task-specific email to:', user.email, 'for task:', taskId);
+            const results = await strapi.service('api::analyzer.user-results').getUserResultsForTask(userId, taskId);
+            
+            // Check if email configuration is present
+            if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+                throw new Error('Email configuration missing: EMAIL_USER or EMAIL_PASSWORD not set');
+            }
+
+            await strapi.service('api::analyzer.email').sendResultsEmail(user.email, user.name, results);
+            
+            ctx.body = { 
+                success: true, 
+                message: 'Task results sent successfully',
+                debug: {
+                    userId,
+                    taskId,
+                    userEmail: user.email,
+                    emailConfig: {
+                        service: process.env.EMAIL_SERVICE || 'gmail',
+                        userConfigured: !!process.env.EMAIL_USER,
+                        passwordConfigured: !!process.env.EMAIL_PASSWORD
+                    }
+                }
+            };
+        } catch (err) {
+            console.error('sendTaskResultsEmail error:', err);
+            ctx.body = {
+                error: 'An error occurred while sending task results email',
+                details: err instanceof Error ? err.message : 'Unknown error',
+                debug: {
+                    userId: ctx.params.userId,
+                    taskId: ctx.params.taskId,
+                    emailConfig: {
+                        service: process.env.EMAIL_SERVICE || 'gmail',
+                        userConfigured: !!process.env.EMAIL_USER,
+                        passwordConfigured: !!process.env.EMAIL_PASSWORD
+                    },
+                    stack: err instanceof Error ? err.stack : undefined
+                }
+            };
+            ctx.status = 500;
+        }
+    },
+
     async generateImage(ctx, next) {
         try {
             const { prompt } = ctx.request.body;

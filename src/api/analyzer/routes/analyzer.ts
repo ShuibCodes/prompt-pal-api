@@ -102,6 +102,16 @@ export default {
         },
         {
             method: 'POST',
+            path: '/analyzer/users/:userId/tasks/:taskId/send-results',
+            handler: 'analyzer.sendTaskResultsEmail',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'POST',
             path: '/analyzer/generate-image',
             handler: 'analyzer.generateImage',
             config: {

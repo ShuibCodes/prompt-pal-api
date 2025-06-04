@@ -124,6 +124,11 @@ export default {
                 throw new Error(`Invalid input parameters: email=${!!email}, results=${!!results}`);
             }
 
+            // Check if user has any task results
+            if (!results.taskResults || results.taskResults.length === 0) {
+                throw new Error('No task results found for user. User must complete at least one task to receive results email.');
+            }
+
             // Use email username as name if name is not provided
             const displayName = name || email.split('@')[0];
 
@@ -151,6 +156,13 @@ export default {
                 const percentageScore = Math.round((totalTaskScore / maxPossibleScore) * 100);
                 return { taskName, percentageScore };
             });
+
+            // Check if user has completed all tasks (score is not null)
+            const hasCompleteResults = totalScore !== null;
+            const displayScore = hasCompleteResults ? totalScore.toFixed(2) : 'Incomplete';
+            const scoreMessage = hasCompleteResults 
+                ? `Your overall score: ${displayScore}/5` 
+                : 'Complete all tasks to see your overall score';
 
             const resultsHtml = results.taskResults.map((task: any) => {
                 const taskName = task.taskName || 'Task';
@@ -206,12 +218,15 @@ export default {
                             
                             <div class="score-card">
                                 <h2 style="margin: 0 0 10px 0; font-size: 2em;">Overall Score</h2>
-                                <p style="font-size: 3em; margin: 0; font-weight: bold;">${totalScore.toFixed(2)}</p>
+                                <p style="font-size: 3em; margin: 0; font-weight: bold;">${displayScore}</p>
+                                ${hasCompleteResults ? '' : '<p style="font-size: 1.2em; margin: 10px 0 0 0; opacity: 0.8;">Complete all daily tasks to see your overall score</p>'}
                             </div>
 
+                            ${hasCompleteResults && taskScores.length > 0 ? `
                             <div class="chart-container">
                                 <canvas id="taskScoresChart"></canvas>
                             </div>
+                            ` : ''}
 
                             <div style="margin-top: 30px;">
                                 <h2 style="color: #2c3e50; margin-bottom: 20px;">Detailed Results</h2>
@@ -219,10 +234,12 @@ export default {
                             </div>
 
                             <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+                                <p style="color: #7f8c8d;">${scoreMessage}</p>
                                 <p style="color: #7f8c8d;">Thank you for participating in the prompt engineering assessment!</p>
                             </div>
                         </div>
 
+                        ${hasCompleteResults && taskScores.length > 0 ? `
                         <script>
                             // Initialize the chart
                             const ctx = document.getElementById('taskScoresChart').getContext('2d');
@@ -260,6 +277,7 @@ export default {
                                 }
                             });
                         </script>
+                        ` : ''}
                     </body>
                     </html>
                 `,
