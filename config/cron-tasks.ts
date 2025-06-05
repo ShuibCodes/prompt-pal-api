@@ -8,10 +8,17 @@ export default {
       console.log('🕘 Running daily task notifications cron job...');
       
       try {
+        // Send daily notifications
         const result = await strapi.service('api::analyzer.email').sendDailyNotificationsToAllUsers();
         console.log('✅ Daily notifications completed:', result);
+
+        // Reset inactive streaks
+        console.log('🔄 Checking for inactive streaks to reset...');
+        const resetsCount = await strapi.service('api::analyzer.streak').resetInactiveStreaks();
+        console.log(`✅ Streak resets completed: ${resetsCount} streaks reset`);
+
       } catch (error) {
-        console.error('❌ Daily notifications failed:', error);
+        console.error('❌ Daily cron job failed:', error);
       }
     },
     options: {

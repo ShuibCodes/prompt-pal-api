@@ -247,6 +247,8 @@ export default {
             completedAt: new Date().toISOString()
         };
 
+        let isNewCompletion = false;
+
         if (existingScore.length > 0) {
             // Update existing score (increment attempts, update score if better)
             const existing = existingScore[0];
@@ -273,6 +275,18 @@ export default {
             });
 
             console.log(`Created new task score for user ${userId}, task ${taskId}. Score: ${percentageScore}%`);
+            isNewCompletion = true;
+        }
+
+        // Update user streak if this is a new task completion
+        if (isNewCompletion) {
+            try {
+                await strapi.service('api::analyzer.streak').updateUserStreak(userId);
+                console.log(`Updated streak for user ${userId} after completing task ${taskId}`);
+            } catch (error) {
+                console.error(`Failed to update streak for user ${userId}:`, error);
+                // Don't throw error - streak update shouldn't break task completion
+            }
         }
     },
 

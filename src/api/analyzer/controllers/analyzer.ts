@@ -487,4 +487,42 @@ export default {
             ctx.status = 500;
         }
     },
+
+    async getUserStreak(ctx) {
+        try {
+            const { userId } = ctx.params;
+            const streakData = await strapi.service('api::analyzer.streak').getUserStreak(userId);
+            
+            ctx.body = {
+                success: true,
+                data: streakData
+            };
+        } catch (err) {
+            console.error('getUserStreak error:', err);
+            ctx.body = {
+                error: 'An error occurred while fetching user streak',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
+
+    async getStreakLeaderboard(ctx) {
+        try {
+            const limit = parseInt(ctx.query.limit as string) || 10;
+            const leaderboard = await strapi.service('api::analyzer.streak').getStreakLeaderboard(limit);
+            
+            ctx.body = {
+                success: true,
+                data: leaderboard
+            };
+        } catch (err) {
+            console.error('getStreakLeaderboard error:', err);
+            ctx.body = {
+                error: 'An error occurred while fetching streak leaderboard',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
 };

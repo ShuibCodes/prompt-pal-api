@@ -86,6 +86,12 @@
       "relation": "oneToMany",
       "target": "api::task-score.task-score",
       "mappedBy": "user"
+    },
+    "user_streak": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::user-streak.user-streak",
+      "mappedBy": "users_permissions_user"
     }
   }
 }

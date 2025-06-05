@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_streaks",
+  "info": {
+    "singularName": "user-streak",
+    "pluralName": "user-streaks",
+    "displayName": "User Streak"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "currentStreak": {
+      "type": "integer",
+      "default": 0,
+      "required": true,
+      "min": 0
+    },
+    "longestStreak": {
+      "type": "integer",
+      "required": true,
+      "min": 0,
+      "default": 0
+    },
+    "totalCompletedDays": {
+      "type": "integer",
+      "min": 0,
+      "default": 0,
+      "required": true
+    },
+    "lastCompletionDate": {
+      "type": "date",
+      "required": false
+    },
+    "streakStartDate": {
+      "type": "date",
+      "required": false
+    },
+    "users_permissions_user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "user_streak"
+    }
+  }
+}

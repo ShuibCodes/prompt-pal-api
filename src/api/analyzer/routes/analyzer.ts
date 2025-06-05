@@ -42,6 +42,36 @@ export default {
         },
         {
             method: 'GET',
+            path: '/analyzer/users/:userId/streak',
+            handler: 'analyzer.getUserStreak',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'GET',
+            path: '/analyzer/users/:userId/completed-tasks',
+            handler: 'analyzer.getUserCompletedTasks',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'GET',
+            path: '/analyzer/streak-leaderboard',
+            handler: 'analyzer.getStreakLeaderboard',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'GET',
             path: '/analyzer/tasks/:taskId',
             handler: 'analyzer.getTaskById',
             config: {
@@ -134,16 +164,6 @@ export default {
             method: 'GET',
             path: '/analyzer/daily-tasks',
             handler: 'analyzer.getDailyTasks',
-            config: {
-                policies: [],
-                middlewares: [],
-                auth: false,
-            },
-        },
-        {
-            method: 'GET',
-            path: '/analyzer/users/:userId/completed-tasks',
-            handler: 'analyzer.getUserCompletedTasks',
             config: {
                 policies: [],
                 middlewares: [],
