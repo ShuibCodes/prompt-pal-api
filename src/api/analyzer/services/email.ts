@@ -346,7 +346,7 @@ export default {
                     <h3 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 1.3em;">${task.name}</h3>
                     <p style="margin: 0; color: #555; line-height: 1.5;">${task.question.substring(0, 150)}${task.question.length > 150 ? '...' : ''}</p>
                     <div style="margin-top: 15px;">
-                        <a href="${process.env.FRONTEND_URL}/task/${task.id}" 
+                        <a href="${process.env.FRONTEND_URL}" 
                            style="background-color: #ff9800; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
                             Start Challenge →
                         </a>

@@ -9,7 +9,7 @@ export default [
         'http://localhost:3000',
         'http://localhost:5173', 
         'http://localhost:5174',
-        'https://prompt-analyzer-client.vercel.app',
+        'https://prompt-analyzer-client.vercel.app', 
         'https://prompt-pal-front-end.vercel.app',
       ],
       credentials: true,

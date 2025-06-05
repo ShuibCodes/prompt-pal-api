@@ -15,7 +15,7 @@ export default {
       }
     },
     options: {
-      rule: '0 10 * * *', // Every day at 10:00 AM
+      rule: '20 10 * * *', // Every day at 10:20 AM
       tz: 'Europe/Berlin', // Set your timezone here (CEST)
     },
   },
