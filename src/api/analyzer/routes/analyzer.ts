@@ -251,5 +251,15 @@ export default {
                 auth: false,
             },
         },
+        {
+            method: 'PUT',
+            path: '/analyzer/users/:userId/notifications',
+            handler: 'analyzer.updateNotificationPreferences',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
     ],
 };

@@ -68,6 +68,11 @@
       "default": false,
       "configurable": false
     },
+    "dailyEmailNotifications": {
+      "type": "boolean",
+      "default": true,
+      "required": false
+    },
     "role": {
       "type": "relation",
       "relation": "manyToOne",

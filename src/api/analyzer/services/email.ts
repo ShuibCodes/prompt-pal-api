@@ -476,22 +476,23 @@ export default {
                 return { success: true, message: 'No tasks for today', sentCount: 0 };
             }
 
-            // Get all users
+            // Get all users who want to receive daily email notifications
             const users = await strapi.documents('plugin::users-permissions.user').findMany({
                 filters: {
                     blocked: false,
-                    confirmed: true
+                    confirmed: true,
+                    dailyEmailNotifications: true  // Only get users who opted in for notifications
                 },
-                fields: ['email', 'name']
+                fields: ['email', 'name', 'dailyEmailNotifications']
             });
 
-            console.log(`Found ${users.length} users and ${todayTasks.length} tasks for today`);
+            console.log(`Found ${users.length} users who opted in for notifications and ${todayTasks.length} tasks for today`);
 
             let successCount = 0;
             let errorCount = 0;
             const errors = [];
 
-            // Send emails to all users
+            // Send emails to all users who opted in
             for (const user of users) {
                 try {
                     await this.sendDailyTaskNotification(user.email, user.name, todayTasks);
@@ -511,7 +512,7 @@ export default {
 
             return {
                 success: true,
-                message: `Daily notifications sent to ${successCount} users`,
+                message: `Daily notifications sent to ${successCount} users who opted in`,
                 sentCount: successCount,
                 errorCount,
                 errors: errors.length > 0 ? errors : undefined

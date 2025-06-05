@@ -730,6 +730,7 @@ export default {
                     name: user.name,
                     email: user.email,
                     username: user.username,
+                    dailyEmailNotifications: user.dailyEmailNotifications,
                     createdAt: user.createdAt,
                     updatedAt: user.updatedAt
                 }
@@ -992,6 +993,53 @@ export default {
             console.error('deleteAccount error:', err);
             ctx.body = {
                 error: 'An error occurred while deleting account',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
+
+    async updateNotificationPreferences(ctx) {
+        try {
+            const { userId } = ctx.params;
+            const { dailyEmailNotifications } = ctx.request.body;
+
+            // Validate input
+            if (typeof dailyEmailNotifications !== 'boolean') {
+                ctx.body = {
+                    error: 'dailyEmailNotifications must be a boolean value',
+                };
+                ctx.status = 400;
+                return;
+            }
+
+            // Check if user exists
+            const user = await strapi.service('api::analyzer.analyzer').getUserById(userId);
+            if (!user) {
+                ctx.body = {
+                    error: 'User not found',
+                };
+                ctx.status = 404;
+                return;
+            }
+
+            // Update notification preferences
+            const updatedUser = await strapi.documents('plugin::users-permissions.user').update({
+                documentId: userId,
+                data: { dailyEmailNotifications }
+            });
+
+            ctx.body = {
+                success: true,
+                message: 'Notification preferences updated successfully',
+                data: {
+                    dailyEmailNotifications: updatedUser.dailyEmailNotifications
+                }
+            };
+        } catch (err) {
+            console.error('updateNotificationPreferences error:', err);
+            ctx.body = {
+                error: 'An error occurred while updating notification preferences',
                 details: err instanceof Error ? err.message : 'Unknown error',
             };
             ctx.status = 500;
