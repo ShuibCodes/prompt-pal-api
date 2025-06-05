@@ -707,5 +707,294 @@ export default {
             };
             ctx.status = 500;
         }
+    },
+
+    // Profile Settings Handlers
+    async getUserProfile(ctx) {
+        try {
+            const { userId } = ctx.params;
+            const user = await strapi.service('api::analyzer.analyzer').getUserById(userId);
+            
+            if (!user) {
+                ctx.body = {
+                    error: 'User not found',
+                };
+                ctx.status = 404;
+                return;
+            }
+
+            ctx.body = {
+                success: true,
+                data: {
+                    id: user.documentId,
+                    name: user.name,
+                    email: user.email,
+                    username: user.username,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt
+                }
+            };
+        } catch (err) {
+            console.error('getUserProfile error:', err);
+            ctx.body = {
+                error: 'An error occurred while fetching user profile',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
+
+    async updateUserProfile(ctx) {
+        try {
+            const { userId } = ctx.params;
+            const { name, email } = ctx.request.body;
+
+            // Validate input
+            if (!name && !email) {
+                ctx.body = {
+                    error: 'At least one field (name or email) is required',
+                };
+                ctx.status = 400;
+                return;
+            }
+
+            // Check if user exists
+            const user = await strapi.service('api::analyzer.analyzer').getUserById(userId);
+            if (!user) {
+                ctx.body = {
+                    error: 'User not found',
+                };
+                ctx.status = 404;
+                return;
+            }
+
+            // Check if email is already taken by another user
+            if (email && email !== user.email) {
+                const existingUser = await strapi.query('plugin::users-permissions.user').findOne({
+                    where: { email }
+                });
+                
+                if (existingUser && existingUser.documentId !== userId) {
+                    ctx.body = {
+                        error: 'Email is already taken by another user',
+                    };
+                    ctx.status = 400;
+                    return;
+                }
+            }
+
+            // Prepare update data
+            const updateData: any = {};
+            if (name) updateData.name = name;
+            if (email) updateData.email = email;
+
+            // Update user
+            const updatedUser = await strapi.documents('plugin::users-permissions.user').update({
+                documentId: userId,
+                data: updateData
+            });
+
+            ctx.body = {
+                success: true,
+                message: 'Profile updated successfully',
+                data: {
+                    id: updatedUser.documentId,
+                    name: updatedUser.name,
+                    email: updatedUser.email,
+                    username: updatedUser.username,
+                    updatedAt: updatedUser.updatedAt
+                }
+            };
+        } catch (err) {
+            console.error('updateUserProfile error:', err);
+            ctx.body = {
+                error: 'An error occurred while updating user profile',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
+
+    async changePassword(ctx) {
+        try {
+            const { userId } = ctx.params;
+            const { currentPassword, newPassword } = ctx.request.body;
+
+            // Validate input
+            if (!currentPassword || !newPassword) {
+                ctx.body = {
+                    error: 'Both current password and new password are required',
+                };
+                ctx.status = 400;
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                ctx.body = {
+                    error: 'New password must be at least 6 characters long',
+                };
+                ctx.status = 400;
+                return;
+            }
+
+            // Get user with password
+            const user = await strapi.query('plugin::users-permissions.user').findOne({
+                where: { documentId: userId }
+            });
+
+            if (!user) {
+                ctx.body = {
+                    error: 'User not found',
+                };
+                ctx.status = 404;
+                return;
+            }
+
+            // Verify current password
+            const validPassword = await strapi.service('plugin::users-permissions.user').validatePassword(
+                currentPassword,
+                user.password
+            );
+
+            if (!validPassword) {
+                ctx.body = {
+                    error: 'Current password is incorrect',
+                };
+                ctx.status = 400;
+                return;
+            }
+
+            // Hash new password
+            const hashedPassword = await strapi.service('plugin::users-permissions.user').hashPassword(newPassword);
+
+            // Update password
+            await strapi.documents('plugin::users-permissions.user').update({
+                documentId: userId,
+                data: { password: hashedPassword }
+            });
+
+            ctx.body = {
+                success: true,
+                message: 'Password changed successfully'
+            };
+        } catch (err) {
+            console.error('changePassword error:', err);
+            ctx.body = {
+                error: 'An error occurred while changing password',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
+
+    async deleteAccount(ctx) {
+        try {
+            const { userId } = ctx.params;
+            const { confirmPassword } = ctx.request.body;
+
+            // Validate confirmation password
+            if (!confirmPassword) {
+                ctx.body = {
+                    error: 'Password confirmation is required to delete account',
+                };
+                ctx.status = 400;
+                return;
+            }
+
+            // Get user with password
+            const user = await strapi.query('plugin::users-permissions.user').findOne({
+                where: { documentId: userId }
+            });
+
+            if (!user) {
+                ctx.body = {
+                    error: 'User not found',
+                };
+                ctx.status = 404;
+                return;
+            }
+
+            // Verify password
+            const validPassword = await strapi.service('plugin::users-permissions.user').validatePassword(
+                confirmPassword,
+                user.password
+            );
+
+            if (!validPassword) {
+                ctx.body = {
+                    error: 'Password is incorrect',
+                };
+                ctx.status = 400;
+                return;
+            }
+
+            // Delete related data before deleting user
+            console.log(`🗑️ Deleting account data for user ${userId}...`);
+
+            // Delete user streak
+            try {
+                const userStreak = await strapi.documents('api::user-streak.user-streak').findFirst({
+                    filters: { users_permissions_user: { documentId: userId } }
+                });
+                if (userStreak) {
+                    await strapi.documents('api::user-streak.user-streak').delete({
+                        documentId: userStreak.documentId
+                    });
+                    console.log('✅ Deleted user streak');
+                }
+            } catch (streakErr) {
+                console.warn('Warning: Could not delete user streak:', streakErr);
+            }
+
+            // Delete task scores
+            try {
+                const taskScores = await strapi.documents('api::task-score.task-score').findMany({
+                    filters: { user: { documentId: userId } }
+                });
+                for (const score of taskScores) {
+                    await strapi.documents('api::task-score.task-score').delete({
+                        documentId: score.documentId
+                    });
+                }
+                console.log(`✅ Deleted ${taskScores.length} task scores`);
+            } catch (scoresErr) {
+                console.warn('Warning: Could not delete task scores:', scoresErr);
+            }
+
+            // Delete submission results - only if the content type exists
+            try {
+                // Try to delete submission results, but handle gracefully if content type doesn't exist
+                const submissions = await strapi.db.query('api::submission-result.submission-result').findMany({
+                    where: { user: { documentId: userId } }
+                });
+                for (const submission of submissions) {
+                    await strapi.db.query('api::submission-result.submission-result').delete({
+                        where: { documentId: submission.documentId }
+                    });
+                }
+                console.log(`✅ Deleted ${submissions.length} submission results`);
+            } catch (submissionsErr) {
+                console.warn('Warning: Could not delete submission results (content type might not exist):', submissionsErr);
+            }
+
+            // Finally delete the user
+            await strapi.documents('plugin::users-permissions.user').delete({
+                documentId: userId
+            });
+
+            console.log(`✅ Successfully deleted user account ${userId}`);
+
+            ctx.body = {
+                success: true,
+                message: 'Account deleted successfully'
+            };
+        } catch (err) {
+            console.error('deleteAccount error:', err);
+            ctx.body = {
+                error: 'An error occurred while deleting account',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
     }
 };

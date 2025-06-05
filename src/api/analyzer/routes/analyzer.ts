@@ -210,5 +210,46 @@ export default {
                 auth: false,
             },
         },
+        // Profile Settings Routes
+        {
+            method: 'GET',
+            path: '/analyzer/users/:userId/profile',
+            handler: 'analyzer.getUserProfile',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'PUT',
+            path: '/analyzer/users/:userId/profile',
+            handler: 'analyzer.updateUserProfile',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'PUT',
+            path: '/analyzer/users/:userId/password',
+            handler: 'analyzer.changePassword',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'POST',
+            path: '/analyzer/users/:userId/account/delete',
+            handler: 'analyzer.deleteAccount',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
     ],
 };
