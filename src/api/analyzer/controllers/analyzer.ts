@@ -413,7 +413,7 @@ export default {
 
     async googleSignIn(ctx) {
         try {
-            const { email, name, googleId } = ctx.request.body;
+            const { email, name, firstName, lastName, googleId } = ctx.request.body;
             
             if (!email || !name || !googleId) {
                 ctx.body = {
@@ -423,31 +423,63 @@ export default {
                 return;
             }
 
+            // Use provided firstName/lastName or fallback to splitting name
+            const finalFirstName = firstName || name.split(' ')[0] || '';
+            const finalLastName = lastName || name.split(' ').slice(1).join(' ') || 'User';
+
+            console.log('🔍 Google Sign-In Data:', {
+                email,
+                name,
+                firstName: finalFirstName,
+                lastName: finalLastName,
+                googleId
+            });
+
             // Check if user already exists by email
             let user = await strapi.query('plugin::users-permissions.user').findOne({
                 where: { email }
             });
 
             if (user) {
-                // User exists, just return their info
+                // User exists, update with Google name data if missing lastname
+                if (!user.lastname && finalLastName) {
+                    console.log('📝 Updating existing user with lastname:', finalLastName);
+                    user = await strapi.query('plugin::users-permissions.user').update({
+                        where: { id: user.id },
+                        data: {
+                            lastname: finalLastName,
+                            name: finalFirstName // Update first name too if needed
+                        }
+                    });
+                }
+                
                 ctx.body = {
                     success: true,
                     user: {
                         id: user.documentId,
                         email: user.email,
-                        name: user.name
+                        name: user.name,
+                        lastname: user.lastname
                     }
                 };
             } else {
-                // Create new user with Google info
+                // Create new user with Google info including lastname
                 user = await strapi.query('plugin::users-permissions.user').create({
                     data: {
                         email,
                         username: email, // Use email as username
-                        name,
+                        name: finalFirstName,
+                        lastname: finalLastName,
                         confirmed: true, // Auto-confirm Google users
                         blocked: false
                     }
+                });
+
+                console.log('✅ Created new Google user:', {
+                    id: user.documentId,
+                    email: user.email,
+                    name: user.name,
+                    lastname: user.lastname
                 });
 
                 ctx.body = {
@@ -455,7 +487,8 @@ export default {
                     user: {
                         id: user.documentId,
                         email: user.email,
-                        name: user.name
+                        name: user.name,
+                        lastname: user.lastname
                     }
                 };
             }
@@ -525,4 +558,154 @@ export default {
             ctx.status = 500;
         }
     },
+
+    async syncUserStreak(ctx) {
+        try {
+            const { userId } = ctx.params;
+            console.log(`🔄 Syncing streak for user ${userId}...`);
+            
+            // Get all completed tasks for this user
+            const taskScores = await strapi.documents('api::task-score.task-score').findMany({
+                filters: {
+                    user: { documentId: userId },
+                    isCompleted: true
+                },
+                sort: { completedAt: 'asc' }
+            });
+
+            console.log(`📊 Found ${taskScores.length} completed tasks for user ${userId}`);
+
+            if (taskScores.length === 0) {
+                ctx.body = {
+                    success: true,
+                    message: 'No completed tasks found',
+                    data: { currentStreak: 0, longestStreak: 0, totalCompletedDays: 0 }
+                };
+                return;
+            }
+
+            // Get or create user streak record
+            const userStreak = await strapi.service('api::analyzer.streak').getOrCreateUserStreak(userId);
+            
+            // Calculate streak based on completion dates
+            const completionDates = taskScores.map(score => {
+                const date = new Date(score.completedAt);
+                return date.toISOString().split('T')[0];
+            });
+
+            // Remove duplicates and sort
+            const uniqueDates = [...new Set(completionDates)].sort();
+            console.log(`📅 Unique completion dates:`, uniqueDates);
+
+            let currentStreak = 0;
+            let longestStreak = 0;
+            let totalCompletedDays = uniqueDates.length;
+            let streakStartDate = null;
+            let lastCompletionDate = null;
+
+            if (uniqueDates.length > 0) {
+                const today = new Date();
+                const todayString = today.toISOString().split('T')[0];
+                
+                // Start from the most recent date and work backwards
+                let tempStreak = 0;
+                let checkDate = new Date(uniqueDates[uniqueDates.length - 1]);
+                
+                // Check if the streak is current (includes today or yesterday)
+                const daysDiff = Math.floor((today.getTime() - checkDate.getTime()) / (1000 * 60 * 60 * 24));
+                const isCurrentStreak = daysDiff <= 1;
+
+                if (isCurrentStreak) {
+                    // Calculate current streak by working backwards from the latest date
+                    for (let i = uniqueDates.length - 1; i >= 0; i--) {
+                        const currentDate = uniqueDates[i];
+                        
+                        if (i === uniqueDates.length - 1) {
+                            // First date (most recent)
+                            tempStreak = 1;
+                            streakStartDate = new Date(currentDate);
+                        } else {
+                            const prevDate = uniqueDates[i + 1];
+                            const currentDateObj = new Date(currentDate);
+                            const prevDateObj = new Date(prevDate);
+                            const diffDays = Math.floor((prevDateObj.getTime() - currentDateObj.getTime()) / (1000 * 60 * 60 * 24));
+                            
+                            if (diffDays === 1) {
+                                // Consecutive day
+                                tempStreak++;
+                                streakStartDate = new Date(currentDate);
+                            } else {
+                                // Break in streak
+                                break;
+                            }
+                        }
+                    }
+                    currentStreak = tempStreak;
+                }
+
+                // Calculate longest streak ever
+                let maxStreak = 0;
+                tempStreak = 1;
+                
+                for (let i = 1; i < uniqueDates.length; i++) {
+                    const currentDateObj = new Date(uniqueDates[i]);
+                    const prevDateObj = new Date(uniqueDates[i - 1]);
+                    const diffDays = Math.floor((currentDateObj.getTime() - prevDateObj.getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 1) {
+                        tempStreak++;
+                    } else {
+                        maxStreak = Math.max(maxStreak, tempStreak);
+                        tempStreak = 1;
+                    }
+                }
+                maxStreak = Math.max(maxStreak, tempStreak);
+                longestStreak = maxStreak;
+
+                lastCompletionDate = new Date(uniqueDates[uniqueDates.length - 1]);
+            }
+
+            // Update the user streak record
+            const updatedStreak = await strapi.documents('api::user-streak.user-streak').update({
+                documentId: userStreak.documentId,
+                data: {
+                    currentStreak,
+                    longestStreak,
+                    totalCompletedDays,
+                    lastCompletionDate,
+                    streakStartDate
+                }
+            });
+
+            console.log(`✅ Updated streak for user ${userId}:`, {
+                currentStreak,
+                longestStreak,
+                totalCompletedDays,
+                lastCompletionDate: lastCompletionDate?.toISOString(),
+                streakStartDate: streakStartDate?.toISOString()
+            });
+
+            ctx.body = {
+                success: true,
+                message: 'Streak synced successfully',
+                data: {
+                    currentStreak,
+                    longestStreak,
+                    totalCompletedDays,
+                    lastCompletionDate,
+                    streakStartDate,
+                    isActiveToday: lastCompletionDate ? 
+                        lastCompletionDate.toISOString().split('T')[0] === new Date().toISOString().split('T')[0] : 
+                        false
+                }
+            };
+        } catch (err) {
+            console.error('syncUserStreak error:', err);
+            ctx.body = {
+                error: 'An error occurred while syncing user streak',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    }
 };

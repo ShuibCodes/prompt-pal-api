@@ -116,12 +116,20 @@ export default {
       }
     }
 
+    // Check if user completed a task today
+    const today = new Date();
+    const todayDateString = today.toISOString().split('T')[0];
+    const isActiveToday = userStreak.lastCompletionDate ? 
+      new Date(userStreak.lastCompletionDate).toISOString().split('T')[0] === todayDateString : 
+      false;
+
     return {
       currentStreak: userStreak.currentStreak || 0,
       longestStreak: userStreak.longestStreak || 0,
       totalCompletedDays: userStreak.totalCompletedDays || 0,
       lastCompletionDate: userStreak.lastCompletionDate,
-      streakStartDate: userStreak.streakStartDate
+      streakStartDate: userStreak.streakStartDate,
+      isActiveToday
     };
   },
 

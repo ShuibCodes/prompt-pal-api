@@ -200,5 +200,15 @@ export default {
                 auth: false,
             },
         },
+        {
+            method: 'POST',
+            path: '/analyzer/users/:userId/sync-streak',
+            handler: 'analyzer.syncUserStreak',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
     ],
 };
