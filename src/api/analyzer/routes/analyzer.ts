@@ -81,9 +81,69 @@ export default {
             },
         },
         {
+            method: 'GET',
+            path: '/analyzer/users/:userId/tasks',
+            handler: 'analyzer.getUserTasks',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'GET',
+            path: '/analyzer/users/:userId/image-tasks',
+            handler: 'analyzer.getUserImageTasks',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'GET',
+            path: '/analyzer/users/:userId/results',
+            handler: 'analyzer.getUserResults',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'GET',
+            path: '/analyzer/users/:userId/streak',
+            handler: 'analyzer.getUserStreak',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
             method: 'POST',
             path: '/analyzer/users/:userId/submit',
             handler: 'analyzer.submitUserSolution',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'GET',
+            path: '/analyzer/users/:userId',
+            handler: 'analyzer.getUserById',
+            config: {
+                policies: [],
+                middlewares: [],
+                auth: false,
+            },
+        },
+        {
+            method: 'GET',
+            path: '/analyzer/users/external/:externalId',
+            handler: 'analyzer.getUserByExternalId',
             config: {
                 policies: [],
                 middlewares: [],

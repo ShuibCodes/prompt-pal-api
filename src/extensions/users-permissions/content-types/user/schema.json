@@ -73,6 +73,12 @@
       "default": true,
       "required": false
     },
+    "externalId": {
+      "type": "string",
+      "unique": true,
+      "required": false,
+      "configurable": true
+    },
     "role": {
       "type": "relation",
       "relation": "manyToOne",
