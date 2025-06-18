@@ -6,11 +6,15 @@ export default {
     },
 
     async getUserByExternalId(externalId: string) {
-        const users = await strapi.documents('plugin::users-permissions.user').findMany({
-            filters: { externalId: externalId },
-            limit: 1
-        });
-        return users.length > 0 ? users[0] : null;
+        try {
+            const user = await strapi.query('plugin::users-permissions.user').findOne({
+                where: { externalId: externalId }
+            });
+            return user;
+        } catch (error) {
+            console.error('Error in getUserByExternalId:', error);
+            throw error;
+        }
     },
 
     async getUserTasks(userId: string) {
@@ -60,34 +64,44 @@ export default {
     },
 
     async createNewUser(email: string, name: string, externalId?: string) {
-        const username = email.split('@')[0]; // Generate username from email
-        const password = Math.random().toString(36).slice(-8); // Generate a random password
-        
-        const userData: any = {
-            email,
-            username,
-            password,
-            provider: 'local',
-            confirmed: true,
-            blocked: false,
-            role: 1, // Authenticated role
-            name,
-            lastname: 'User' // Default lastname
-        };
+        try {
+            const username = email.split('@')[0]; // Generate username from email
+            const password = Math.random().toString(36).slice(-8); // Generate a random password
+            
+            const userData: any = {
+                email,
+                username,
+                password,
+                provider: 'local',
+                confirmed: true,
+                blocked: false,
+                role: 1, // Authenticated role
+                name,
+                lastname: 'User' // Default lastname
+            };
 
-        // Add externalId if provided
-        if (externalId) {
-            userData.externalId = externalId;
+            // Add externalId if provided
+            if (externalId) {
+                userData.externalId = externalId;
+            }
+            
+            const newUser = await strapi.query('plugin::users-permissions.user').create({
+                data: userData
+            });
+
+            if (!newUser) {
+                throw new Error('Failed to create user');
+            }
+
+            return {
+                documentId: newUser.id,
+                ...newUser
+            };
+        } catch (error) {
+            console.error('Error in createNewUser:', error);
+            throw error;
         }
-        
-        const newUser = await strapi.query('plugin::users-permissions.user').create({
-            data: userData
-        });
-
-        return newUser;
     },
-
-
 
     async getTaskById(taskId: string) {
         return await strapi.documents('api::task.task').findOne({
