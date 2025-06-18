@@ -58,6 +58,7 @@ export default {
             ctx.body = {
                 data: imageTasks.map(task => ({
                     id: task.documentId,
+                    documentId: task.documentId, // Add this for consistency with frontend
                     name: task.name,
                     question: task.question,
                     idealPrompt: task.idealPrompt,
