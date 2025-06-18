@@ -107,6 +107,10 @@ export default {
             throw new Error('Submission or user not found');
         }
 
+        if (!submission.task || !submission.task.documentId) {
+            throw new Error('Submission task not found or invalid');
+        }
+
         const criteria = await this.getCriteria();
 
         const gptResponseSchema = await this.generateGptResponseSchema(criteria);

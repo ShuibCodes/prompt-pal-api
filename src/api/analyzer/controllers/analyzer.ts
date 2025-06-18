@@ -34,6 +34,7 @@ export default {
             ctx.body = {
                 data: userTasks.map(task => ({
                     id: task.documentId,
+                    documentId: task.documentId, // Add this for consistency with frontend
                     name: task.name,
                     question: task.question,
                     idealPrompt: task.idealPrompt,
@@ -57,6 +58,7 @@ export default {
             ctx.body = {
                 data: imageTasks.map(task => ({
                     id: task.documentId,
+                    documentId: task.documentId, // Add this for consistency with frontend
                     name: task.name,
                     question: task.question,
                     idealPrompt: task.idealPrompt,
@@ -118,11 +120,104 @@ export default {
         }
     },
 
+    async getUserById(ctx, next) {
+        try {
+            const user = await strapi.service('api::analyzer.analyzer').getUserById(ctx.params.userId);
+            if (!user) {
+                ctx.body = {
+                    error: 'User not found',
+                };
+                ctx.status = 404;
+                return;
+            }
+            ctx.body = {
+                success: true,
+                data: {
+                    id: user.documentId,
+                    email: user.email,
+                    name: user.name,
+                    username: user.username,
+                    externalId: user.externalId,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt
+                }
+            };
+        } catch (err) {
+            ctx.body = {
+                error: 'An error occurred while fetching user',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
+
+    async getUserByExternalId(ctx, next) {
+        try {
+            const user = await strapi.service('api::analyzer.analyzer').getUserByExternalId(ctx.params.externalId);
+            if (!user) {
+                ctx.body = {
+                    error: 'User not found',
+                };
+                ctx.status = 404;
+                return;
+            }
+            ctx.body = {
+                success: true,
+                data: {
+                    id: user.documentId,
+                    email: user.email,
+                    name: user.name,
+                    username: user.username,
+                    externalId: user.externalId,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt
+                }
+            };
+        } catch (err) {
+            ctx.body = {
+                error: 'An error occurred while fetching user by external ID',
+                details: err instanceof Error ? err.message : 'Unknown error',
+            };
+            ctx.status = 500;
+        }
+    },
+
     async createNewUser(ctx, next) {
         try {
-            const newUserId = await strapi.service('api::analyzer.analyzer').createNewUser(ctx.request.body.email, ctx.request.body.name)
-            ctx.body = { id: newUserId };
+            const { email, name, externalId } = ctx.request.body;
+            
+            // Check if user already exists with this external ID
+            if (externalId) {
+                const existingUser = await strapi.service('api::analyzer.analyzer').getUserByExternalId(externalId);
+                if (existingUser) {
+                    ctx.body = { 
+                        id: existingUser.documentId,
+                        success: true,
+                        message: 'User already exists with this external ID'
+                    };
+                    return;
+                }
+            }
+            
+            // Create new user with external ID
+            const newUser = await strapi.service('api::analyzer.analyzer').createNewUser(email, name, externalId);
+            
+            ctx.body = { 
+                id: newUser.documentId || newUser.id,
+                success: true,
+                message: 'User created successfully'
+            };
         } catch (err) {
+            // Handle unique constraint violations
+            if (err.message && err.message.includes('externalId')) {
+                ctx.body = {
+                    error: 'User with this external ID already exists',
+                    details: 'External ID must be unique',
+                };
+                ctx.status = 409; // Conflict
+                return;
+            }
+            
             ctx.body = {
                 error: 'An error occurred while creating new user',
                 details: err instanceof Error ? err.message : 'Unknown error',

@@ -163,6 +163,12 @@ export default {
         const tasksResults = new Map<string, any>();
 
         for (const submission of submissions) {
+            // Skip submissions with missing task references
+            if (!submission.task || !submission.task.documentId) {
+                console.warn(`Skipping submission ${submission.documentId} - missing task reference`);
+                continue;
+            }
+            
             const taskId = submission.task.documentId;
             
             // Only process submissions for today's tasks
@@ -204,16 +210,27 @@ export default {
             throw new Error(`Solution should contain at least ${SOLUTION_MIN_NON_WHITESPACE_CHARACTERS} non-whitespace characters, found only ${solutionNonWhitespaceCharactersCount}`);
         }
 
-        const submission = await strapi.documents('api::submission.submission').create({
-            data: {
-                users_permissions_user: userId,
-                task: taskId,
-                solutionPrompt
-            }
-        });
+        console.log('Creating submission with:', { userId, taskId, solutionPrompt: solutionPrompt.substring(0, 50) + '...' });
 
-        // TODO: Refactor with some queue
-        strapi.service('api::analyzer.submission-checker').checkSubmission(submission.documentId);
+        try {
+            const submission = await strapi.documents('api::submission.submission').create({
+                data: {
+                    users_permissions_user: userId,
+                    task: taskId,
+                    solutionPrompt
+                }
+            });
+
+            console.log('Submission created successfully:', submission.documentId);
+
+            // TODO: Refactor with some queue
+            strapi.service('api::analyzer.submission-checker').checkSubmission(submission.documentId);
+            
+            return submission;
+        } catch (error) {
+            console.error('Submission creation failed:', error);
+            throw error;
+        }
     },
 
     async countNonWhitespaceCharacters(text: string): Promise<number> {

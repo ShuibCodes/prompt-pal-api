@@ -1171,6 +1171,9 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    externalId: Schema.Attribute.String &
+      Schema.Attribute.Unique &
+      Schema.Attribute.Configurable;
     lastname: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
