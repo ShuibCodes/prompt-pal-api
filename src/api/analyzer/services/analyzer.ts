@@ -68,6 +68,15 @@ export default {
             const username = email.split('@')[0]; // Generate username from email
             const password = Math.random().toString(36).slice(-8); // Generate a random password
             
+            // First get the authenticated role
+            const authenticatedRole = await strapi.query('plugin::users-permissions.role').findOne({
+                where: { type: 'authenticated' }
+            });
+
+            if (!authenticatedRole) {
+                throw new Error('Authenticated role not found');
+            }
+            
             const userData: any = {
                 email,
                 username,
@@ -75,7 +84,7 @@ export default {
                 provider: 'local',
                 confirmed: true,
                 blocked: false,
-                role: 1, // Authenticated role
+                role: authenticatedRole.id, // Use the actual role ID
                 name,
                 lastname: 'User' // Default lastname
             };
