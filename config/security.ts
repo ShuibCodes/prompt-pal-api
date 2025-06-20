@@ -10,6 +10,7 @@ export default ({ env }) => ({
       'https://edu-sync-5s2x-git-feat-prompt-pal-i-1098a1-shuaybcodes-projects.vercel.app',
       'https://edu-sync-5s2x-o0oi0mnj8-shuaybcodes-projects.vercel.app',
       'https://edu-sync-5s2x-git-testing-shuaybcodes-projects.vercel.app',
+      'https://edu-sync-5s2x.vercel.app',
       env('FRONTEND_URL', 'http://localhost:5173')
     ],
     headers: ['*'],
